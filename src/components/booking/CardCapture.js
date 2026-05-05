@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { getStripe } from "@/lib/stripe";
+import { getBookedSlots, createOrFindCustomer, createAppointment } from "@/lib/appointments";
 
 const cardStyle = {
   style: {
@@ -51,26 +52,30 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
         return;
       }
 
-      // 3. Confirm booking in Firestore
-      const bookingRes = await fetch("/api/confirm-booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...bookingData,
-          ...customerDetails,
-          stripeSetupIntentId: setupIntent.id,
-          stripeCustomerId: customerId,
-        }),
-      });
-      const bookingResult = await bookingRes.json();
-
-      if (!bookingRes.ok) {
-        setCardError(bookingResult.error || "Booking failed");
-        setProcessing(false);
-        return;
+      // 3. Confirm booking directly in Firestore (client-side) to avoid server gRPC issues
+      const { barberId, date, time } = bookingData;
+      
+      const bookedSlots = await getBookedSlots(barberId, date);
+      if (bookedSlots.includes(time)) {
+        throw new Error("This time slot has just been booked. Please start over.");
       }
 
-      onSuccess(bookingResult);
+      const firestoreCustomerId = await createOrFindCustomer({
+        name: customerDetails.name,
+        email: customerDetails.email,
+        phone: customerDetails.phone,
+        stripeCustomerId: customerId || null,
+      });
+
+      const appointmentId = await createAppointment({
+        barberId,
+        customerId: firestoreCustomerId,
+        date,
+        time,
+        stripeSetupIntentId: setupIntent.id,
+      });
+
+      onSuccess({ success: true, appointmentId, message: "Booking confirmed!" });
     } catch (err) {
       console.error("Payment error:", err);
       setCardError(err.message || "Something went wrong");
@@ -83,7 +88,7 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
   return (
     <form onSubmit={handleSubmit}>
       <div className="bg-[var(--card-bg)] border border-[var(--glass-border)] rounded-xl p-4 mb-4 focus-within:border-[var(--gold)]/40 transition-colors duration-300">
-        <CardElement options={cardStyle} onChange={(e) => { if (e.error) setCardError(e.error.message); else setCardError(null); }} />
+        <CardElement options={{ ...cardStyle, hidePostalCode: true }} onChange={(e) => { if (e.error) setCardError(e.error.message); else setCardError(null); }} />
       </div>
 
       {cardError && <p className="text-red-400 text-xs mb-4 text-center">{cardError}</p>}

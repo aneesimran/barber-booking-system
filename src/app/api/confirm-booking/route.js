@@ -42,7 +42,9 @@ export async function POST(request) {
     }
 
     // Check the slot is still available (prevent double-booking)
+    console.log("Checking booked slots...");
     const bookedSlots = await getBookedSlots(barberId, date);
+    console.log("Booked slots:", bookedSlots);
     if (bookedSlots.includes(time)) {
       return Response.json(
         { error: "This time slot has just been booked. Please select another." },
@@ -51,14 +53,17 @@ export async function POST(request) {
     }
 
     // Create or find the customer in Firestore
+    console.log("Creating/finding customer...");
     const customerId = await createOrFindCustomer({
       name,
       email,
       phone,
       stripeCustomerId: stripeCustomerId || null,
     });
+    console.log("Customer ID:", customerId);
 
     // Create the appointment
+    console.log("Creating appointment...");
     const appointmentId = await createAppointment({
       barberId,
       customerId,
@@ -66,6 +71,7 @@ export async function POST(request) {
       time,
       stripeSetupIntentId: stripeSetupIntentId || null,
     });
+    console.log("Appointment ID:", appointmentId);
 
     return Response.json({
       success: true,

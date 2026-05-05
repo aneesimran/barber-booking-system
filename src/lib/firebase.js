@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
 
 /**
  * Firebase configuration — all values read from environment variables.
@@ -15,9 +15,12 @@ const firebaseConfig = {
 };
 
 // Initialise Firebase (prevent re-initialisation in dev with HMR)
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+const isAppsEmpty = !getApps().length;
+const app = isAppsEmpty ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Firestore database instance
-const db = getFirestore(app);
+// Firestore database instance with long polling to fix hanging in API routes
+const db = isAppsEmpty 
+  ? initializeFirestore(app, { experimentalForceLongPolling: true }) 
+  : getFirestore(app);
 
 export { app, db };

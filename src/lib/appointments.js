@@ -51,12 +51,17 @@ export async function getBookedSlots(barberId, dateString) {
     const q = query(
       appointmentsRef,
       where("barberId", "==", barberId),
-      where("date", "==", dateString),
-      where("status", "in", ["confirmed", "completed"])
+      where("date", "==", dateString)
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => doc.data().time);
+    // Filter to only confirmed/completed appointments client-side
+    return snapshot.docs
+      .filter((doc) => {
+        const status = doc.data().status;
+        return status === "confirmed" || status === "completed";
+      })
+      .map((doc) => doc.data().time);
   } catch (error) {
     console.error("Error fetching booked slots:", error);
     return [];
