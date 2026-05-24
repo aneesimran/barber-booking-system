@@ -24,6 +24,258 @@ export function formatLocalDate(date) {
   return `${year}-${month}-${day}`;
 }
 
+// ============================================================================
+// REST API Fallbacks for Server-Side (Next.js Node.js Environment)
+// To bypass gRPC / WebSocket hanging issues in Next.js server-side
+// ============================================================================
+
+async function getBarberScheduleRest(barberId) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/barberSchedules/${barberId}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      throw new Error(`REST schedule fetch failed: ${res.statusText}`);
+    }
+    const data = await res.json();
+    const fields = data.fields || {};
+    const schedule = {};
+    
+    if (fields.workingHours && fields.workingHours.mapValue) {
+      schedule.workingHours = {};
+      const whFields = fields.workingHours.mapValue.fields || {};
+      for (const [day, val] of Object.entries(whFields)) {
+        if (val.nullValue !== undefined) {
+          schedule.workingHours[day] = null;
+        } else if (val.mapValue) {
+          const start = val.mapValue.fields?.start?.stringValue;
+          const end = val.mapValue.fields?.end?.stringValue;
+          schedule.workingHours[day] = { start, end };
+        }
+      }
+    }
+    
+    if (fields.lunchBreak) {
+      if (fields.lunchBreak.nullValue !== undefined) {
+        schedule.lunchBreak = null;
+      } else if (fields.lunchBreak.mapValue) {
+        const start = fields.lunchBreak.mapValue.fields?.start?.stringValue;
+        const end = fields.lunchBreak.mapValue.fields?.end?.stringValue;
+        schedule.lunchBreak = { start, end };
+      }
+    }
+    return schedule;
+  } catch (err) {
+    console.error("Error in getBarberScheduleRest:", err);
+    return null;
+  }
+}
+
+async function getBookedSlotsRest(barberId, dateString) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
+  const query = {
+    structuredQuery: {
+      from: [{ collectionId: "appointments" }],
+      where: {
+        compositeFilter: {
+          op: "AND",
+          filters: [
+            {
+              fieldFilter: {
+                field: { fieldPath: "barberId" },
+                op: "EQUAL",
+                value: { stringValue: barberId }
+              }
+            },
+            {
+              fieldFilter: {
+                field: { fieldPath: "date" },
+                op: "EQUAL",
+                value: { stringValue: dateString }
+              }
+            }
+          ]
+        }
+      }
+    }
+  };
+  
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(query)
+    });
+    
+    if (!res.ok) throw new Error(`REST query error: ${res.statusText}`);
+    const data = await res.json();
+    
+    const bookedSlots = [];
+    for (const item of data) {
+      if (item.document) {
+        const fields = item.document.fields || {};
+        const status = fields.status?.stringValue;
+        if (status === "confirmed" || status === "completed") {
+          const time = fields.time?.stringValue;
+          if (time) bookedSlots.push(time);
+        }
+      }
+    }
+    return bookedSlots;
+  } catch (err) {
+    console.error("Error in getBookedSlotsRest:", err);
+    return [];
+  }
+}
+
+async function getBlockedSlotsRest(barberId, dateString) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
+  const query = {
+    structuredQuery: {
+      from: [{ collectionId: "blockedSlots" }],
+      where: {
+        compositeFilter: {
+          op: "AND",
+          filters: [
+            {
+              fieldFilter: {
+                field: { fieldPath: "barberId" },
+                op: "EQUAL",
+                value: { stringValue: barberId }
+              }
+            },
+            {
+              fieldFilter: {
+                field: { fieldPath: "date" },
+                op: "EQUAL",
+                value: { stringValue: dateString }
+              }
+            }
+          ]
+        }
+      }
+    }
+  };
+  
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(query)
+    });
+    
+    if (!res.ok) throw new Error(`REST blocked slots query error: ${res.statusText}`);
+    const data = await res.json();
+    
+    const blockedSlots = [];
+    for (const item of data) {
+      if (item.document) {
+        const fields = item.document.fields || {};
+        const time = fields.time?.stringValue;
+        if (time) blockedSlots.push(time);
+      }
+    }
+    return blockedSlots;
+  } catch (err) {
+    console.error("Error in getBlockedSlotsRest:", err);
+    return [];
+  }
+}
+
+async function createOrFindCustomerRest(data) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  
+  // Find customer by email
+  const queryUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
+  const queryBody = {
+    structuredQuery: {
+      from: [{ collectionId: "customers" }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: "email" },
+          op: "EQUAL",
+          value: { stringValue: data.email }
+        }
+      }
+    }
+  };
+  
+  const queryRes = await fetch(queryUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(queryBody)
+  });
+  
+  if (queryRes.ok) {
+    const results = await queryRes.json();
+    for (const item of results) {
+      if (item.document) {
+        return item.document.name.split("/").pop();
+      }
+    }
+  }
+  
+  // Create new customer
+  const createUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/customers`;
+  const customerDoc = {
+    fields: {
+      name: { stringValue: data.name },
+      email: { stringValue: data.email },
+      phone: { stringValue: data.phone },
+      stripeCustomerId: data.stripeCustomerId ? { stringValue: data.stripeCustomerId } : { nullValue: null },
+      createdAt: { timestampValue: new Date().toISOString() }
+    }
+  };
+  
+  const createRes = await fetch(createUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(customerDoc)
+  });
+  
+  if (!createRes.ok) {
+    throw new Error(`REST customer creation failed: ${createRes.statusText}`);
+  }
+  
+  const createdData = await createRes.json();
+  return createdData.name.split("/").pop();
+}
+
+async function createAppointmentRest(data) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const createUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/appointments`;
+  
+  const appointmentDoc = {
+    fields: {
+      barberId: { stringValue: data.barberId },
+      customerId: { stringValue: data.customerId },
+      date: { stringValue: data.date },
+      time: { stringValue: data.time },
+      duration: { integerValue: 20 },
+      status: { stringValue: "confirmed" },
+      reminderSent: { booleanValue: false },
+      stripeSetupIntentId: data.stripeSetupIntentId ? { stringValue: data.stripeSetupIntentId } : { nullValue: null },
+      createdAt: { timestampValue: new Date().toISOString() }
+    }
+  };
+  
+  const createRes = await fetch(createUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(appointmentDoc)
+  });
+  
+  if (!createRes.ok) {
+    throw new Error(`REST appointment creation failed: ${createRes.statusText}`);
+  }
+  
+  const createdData = await createRes.json();
+  return createdData.name.split("/").pop();
+}
+
 /**
  * Generate all possible 20-minute time slots for a barber on a given date, based on their schedule.
  * @param {Object} schedule - Barber's schedule object containing workingHours and lunchBreak
@@ -76,6 +328,10 @@ export function generateTimeSlots(schedule, date) {
  * @returns {Promise<string[]>} Array of booked time strings like ["09:00", "10:40"]
  */
 export async function getBookedSlots(barberId, dateString) {
+  if (typeof window === "undefined") {
+    return getBookedSlotsRest(barberId, dateString);
+  }
+
   try {
     const appointmentsRef = collection(db, "appointments");
     const q = query(
@@ -104,14 +360,19 @@ export async function getBookedSlots(barberId, dateString) {
  * @returns {Promise<Object>} Schedule object with workingHours and lunchBreak
  */
 export async function getBarberSchedule(barberId) {
-  try {
-    const scheduleRef = doc(db, "barberSchedules", barberId);
-    const snap = await getDoc(scheduleRef);
-    if (snap.exists()) {
-      return snap.data();
+  if (typeof window === "undefined") {
+    const restSchedule = await getBarberScheduleRest(barberId);
+    if (restSchedule) return restSchedule;
+  } else {
+    try {
+      const scheduleRef = doc(db, "barberSchedules", barberId);
+      const snap = await getDoc(scheduleRef);
+      if (snap.exists()) {
+        return snap.data();
+      }
+    } catch (err) {
+      console.error("Error fetching schedule, using fallback", err);
     }
-  } catch (err) {
-    console.error("Error fetching schedule, using fallback", err);
   }
 
   // Fallback to static config
@@ -130,6 +391,10 @@ export async function getBarberSchedule(barberId) {
  * @returns {Promise<string[]>} Array of blocked time strings
  */
 export async function getBlockedSlots(barberId, dateString) {
+  if (typeof window === "undefined") {
+    return getBlockedSlotsRest(barberId, dateString);
+  }
+
   try {
     const blockedRef = collection(db, "blockedSlots");
     const q = query(
@@ -190,6 +455,10 @@ export async function getAvailableSlots(barberId, date) {
  * @returns {Promise<string>} The new document ID
  */
 export async function createAppointment(data) {
+  if (typeof window === "undefined") {
+    return createAppointmentRest(data);
+  }
+
   const docRef = await addDoc(collection(db, "appointments"), {
     barberId: data.barberId,
     customerId: data.customerId,
@@ -210,6 +479,10 @@ export async function createAppointment(data) {
  * @returns {Promise<string>} The customer document ID
  */
 export async function createOrFindCustomer(data) {
+  if (typeof window === "undefined") {
+    return createOrFindCustomerRest(data);
+  }
+
   const customersRef = collection(db, "customers");
 
   // Check if customer already exists by email

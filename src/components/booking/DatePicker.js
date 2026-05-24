@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { barbers, dayKeys, shopInfo } from "@/config/barbers";
 import { formatLocalDate } from "@/lib/appointments";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthLabels = [
@@ -12,6 +14,29 @@ const monthLabels = [
 
 export default function DatePicker({ barberId, selectedDate, onSelectDate }) {
   const barber = barbers.find((b) => b.id === barberId);
+  const [schedule, setSchedule] = useState(() => {
+    if (!barber) return null;
+    return {
+      workingHours: barber.workingHours,
+      lunchBreak: barber.lunchBreak
+    };
+  });
+
+  useEffect(() => {
+    if (!barberId) return;
+    const fetchSchedule = async () => {
+      try {
+        const scheduleRef = doc(db, "barberSchedules", barberId);
+        const snap = await getDoc(scheduleRef);
+        if (snap.exists()) {
+          setSchedule(snap.data());
+        }
+      } catch (err) {
+        console.error("Error fetching dynamic schedule in DatePicker:", err);
+      }
+    };
+    fetchSchedule();
+  }, [barberId]);
 
   const dates = useMemo(() => {
     const result = [];
@@ -23,7 +48,7 @@ export default function DatePicker({ barberId, selectedDate, onSelectDate }) {
       date.setDate(today.getDate() + i);
 
       const dayKey = dayKeys[date.getDay()];
-      const isWorking = barber?.workingHours[dayKey] !== null;
+      const isWorking = schedule?.workingHours?.[dayKey] !== null && schedule?.workingHours?.[dayKey] !== undefined;
 
       result.push({
         date,
@@ -35,7 +60,7 @@ export default function DatePicker({ barberId, selectedDate, onSelectDate }) {
       });
     }
     return result;
-  }, [barberId, barber]);
+  }, [barberId, schedule]);
 
   // Group by month for section headers
   const groupedByMonth = useMemo(() => {

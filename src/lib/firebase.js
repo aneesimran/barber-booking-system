@@ -16,13 +16,18 @@ const firebaseConfig = {
 };
 
 // Initialise Firebase (prevent re-initialisation in dev with HMR)
-const isAppsEmpty = !getApps().length;
-const app = isAppsEmpty ? initializeApp(firebaseConfig) : getApps()[0];
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 // Firestore database instance with long polling to fix hanging in API routes
-const db = isAppsEmpty 
-  ? initializeFirestore(app, { experimentalForceLongPolling: true }) 
-  : getFirestore(app);
+let db;
+try {
+  console.log("[Firebase] Initializing Firestore with experimentalForceLongPolling: true...");
+  db = initializeFirestore(app, { experimentalForceLongPolling: true });
+  console.log("[Firebase] Firestore initialized successfully with long polling!");
+} catch (err) {
+  console.log("[Firebase] Firestore initialization failed/already done, getting current instance. Error:", err.message);
+  db = getFirestore(app);
+}
 
 // Auth instance
 const auth = getAuth(app);
