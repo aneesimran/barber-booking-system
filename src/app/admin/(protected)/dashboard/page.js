@@ -3,13 +3,13 @@ import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { barbers } from "@/config/barbers";
+import { formatLocalDate } from "@/lib/appointments";
 
 export default function DashboardPage() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
+    return formatLocalDate(new Date());
   });
 
   useEffect(() => {

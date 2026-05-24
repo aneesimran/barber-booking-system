@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { formatLocalDate } from "@/lib/appointments";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "./ProgressBar";
@@ -42,7 +43,7 @@ export default function BookingWizard({ barber }) {
     if (step > 1) setStep(step - 1);
   };
 
-  const dateString = selectedDate ? selectedDate.toISOString().split("T")[0] : "";
+  const dateString = selectedDate ? formatLocalDate(selectedDate) : "";
 
   // Confirmed state — show confirmation
   if (confirmed) {

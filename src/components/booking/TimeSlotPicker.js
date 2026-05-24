@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatLocalDate } from "@/lib/appointments";
 
 export default function TimeSlotPicker({
   barberId,
@@ -19,7 +20,7 @@ export default function TimeSlotPicker({
       setLoading(true);
       setError(null);
       try {
-        const dateString = selectedDate.toISOString().split("T")[0];
+        const dateString = formatLocalDate(selectedDate);
         const res = await fetch(
           `/api/available-slots?barberId=${barberId}&date=${dateString}`
         );

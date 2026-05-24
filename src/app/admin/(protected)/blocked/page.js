@@ -3,13 +3,12 @@ import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, addDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { barbers } from "@/config/barbers";
-import { getBarberSchedule, generateTimeSlots, getBookedSlots } from "@/lib/appointments";
+import { getBarberSchedule, generateTimeSlots, getBookedSlots, formatLocalDate } from "@/lib/appointments";
 
 export default function BlockedSlotsPage() {
   const [selectedBarberId, setSelectedBarberId] = useState(barbers[0].id);
   const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
+    return formatLocalDate(new Date());
   });
   
   const [slots, setSlots] = useState([]);

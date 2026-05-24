@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { barbers, dayKeys, shopInfo } from "@/config/barbers";
+import { formatLocalDate } from "@/lib/appointments";
 
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthLabels = [
@@ -29,7 +30,7 @@ export default function DatePicker({ barberId, selectedDate, onSelectDate }) {
         dayLabel: dayLabels[date.getDay()],
         dayNumber: date.getDate(),
         month: monthLabels[date.getMonth()],
-        dateString: date.toISOString().split("T")[0],
+        dateString: formatLocalDate(date),
         isWorking,
       });
     }
@@ -47,7 +48,7 @@ export default function DatePicker({ barberId, selectedDate, onSelectDate }) {
   }, [dates]);
 
   const selectedString = selectedDate
-    ? selectedDate.toISOString().split("T")[0]
+    ? formatLocalDate(selectedDate)
     : null;
 
   return (
