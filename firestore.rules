@@ -1,0 +1,188 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: appointments
+    // Document ID: auto-generated
+    // Fields:
+    //   - barberId:            string  (required, immutable, must be "imran" or "ali")
+    //   - customerId:          string  (required, immutable, Firestore doc ID ref)
+    //   - date:                string  (required, immutable, format "YYYY-MM-DD")
+    //   - time:                string  (required, immutable, format "HH:MM")
+    //   - duration:            number  (required, immutable, must be exactly 20)
+    //   - status:              string  (required, must be "confirmed" on create)
+    //   - reminderSent:        bool    (required, must be false on create)
+    //   - stripeSetupIntentId: string|null (optional, immutable)
+    //   - createdAt:           timestamp (required, immutable, must be server timestamp)
+    //
+    // Collection: customers
+    // Document ID: auto-generated
+    // Fields:
+    //   - name:              string  (required, 2-100 chars)
+    //   - email:             string  (required, immutable, valid email, max 254 chars)
+    //   - phone:             string  (required, valid UK mobile, max 20 chars)
+    //   - stripeCustomerId:  string|null (optional)
+    //   - createdAt:         timestamp (required, immutable, must be server timestamp)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Validate that the document contains all required fields
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate that the document contains ONLY the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate email format
+    function isValidEmail(email) {
+      return email is string &&
+             email.size() <= 254 &&
+             email.matches("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    // Validate a complete appointment document on create
+    function isValidAppointmentCreate(data) {
+      let requiredFields = ['barberId', 'customerId', 'date', 'time',
+                            'duration', 'status', 'reminderSent', 'createdAt'];
+      let allAllowedFields = ['barberId', 'customerId', 'date', 'time',
+                              'duration', 'status', 'reminderSent',
+                              'stripeSetupIntentId', 'createdAt'];
+      let validBarberIds = ['imran', 'ali'];
+
+      return
+        // Schema enforcement: only known fields, all required present
+        hasRequiredFields(requiredFields) &&
+        hasOnlyAllowedFields(allAllowedFields) &&
+
+        // barberId: must be a known barber
+        data.barberId is string &&
+        data.barberId in validBarberIds &&
+
+        // customerId: Firestore document ID reference (non-empty, max 128 chars)
+        data.customerId is string &&
+        data.customerId.size() >= 1 &&
+        data.customerId.size() <= 128 &&
+
+        // date: format "YYYY-MM-DD" (format validation only)
+        data.date is string &&
+        data.date.size() == 10 &&
+        data.date.matches("^\\d{4}-\\d{2}-\\d{2}$") &&
+
+        // time: format "HH:MM"
+        data.time is string &&
+        data.time.size() == 5 &&
+        data.time.matches("^\\d{2}:\\d{2}$") &&
+
+        // duration: must be exactly 20 (minutes)
+        data.duration is int &&
+        data.duration == 20 &&
+
+        // status: must be "confirmed" on create
+        data.status is string &&
+        data.status == "confirmed" &&
+
+        // reminderSent: must be false on create
+        data.reminderSent is bool &&
+        data.reminderSent == false &&
+
+        // stripeSetupIntentId: optional — must be string or null
+        (
+          !("stripeSetupIntentId" in data) ||
+          data.stripeSetupIntentId == null ||
+          (data.stripeSetupIntentId is string &&
+           data.stripeSetupIntentId.size() >= 1 &&
+           data.stripeSetupIntentId.size() <= 200)
+        ) &&
+
+        // createdAt: must be the server timestamp (prevents manipulation)
+        data.createdAt is timestamp &&
+        data.createdAt == request.time;
+    }
+
+    // Validate a complete customer document on create
+    function isValidCustomerCreate(data) {
+      let requiredFields = ['name', 'email', 'phone', 'createdAt'];
+      let allAllowedFields = ['name', 'email', 'phone', 'stripeCustomerId', 'createdAt'];
+
+      return
+        // Schema enforcement
+        hasRequiredFields(requiredFields) &&
+        hasOnlyAllowedFields(allAllowedFields) &&
+
+        // name: 2-100 chars
+        data.name is string &&
+        data.name.size() >= 2 &&
+        data.name.size() <= 100 &&
+
+        // email: valid format, max 254 chars
+        isValidEmail(data.email) &&
+
+        // phone: UK mobile format, max 20 chars
+        data.phone is string &&
+        data.phone.size() >= 10 &&
+        data.phone.size() <= 20 &&
+
+        // stripeCustomerId: optional — must be string or null
+        (
+          !("stripeCustomerId" in data) ||
+          data.stripeCustomerId == null ||
+          (data.stripeCustomerId is string &&
+           data.stripeCustomerId.size() >= 1 &&
+           data.stripeCustomerId.size() <= 200)
+        ) &&
+
+        // createdAt: must be server timestamp
+        data.createdAt is timestamp &&
+        data.createdAt == request.time;
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Default deny — block everything not explicitly allowed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ----- APPOINTMENTS -----
+    // Read: allowed (needed for slot availability checking — getBookedSlots)
+    // Create: allowed with strict validation
+    // Update/Delete: denied (no client-side modifications)
+    match /appointments/{appointmentId} {
+      allow read: if true;
+      allow create: if isValidAppointmentCreate(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    // ----- CUSTOMERS -----
+    // Read: allowed (needed for createOrFindCustomer client query by email)
+    // Create: allowed with strict validation
+    // Update/Delete: denied (no client-side modifications)
+    //
+    // ⚠️ SECURITY NOTE: This collection contains PII (email, phone).
+    // Public read is required for the current client-side architecture.
+    // For production hardening, move customer operations server-side
+    // and change this to: allow read: if false;
+    match /customers/{customerId} {
+      allow read: if true;
+      allow create: if isValidCustomerCreate(request.resource.data);
+      allow update, delete: if false;
+    }
+  }
+}
