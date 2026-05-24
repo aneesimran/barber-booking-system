@@ -51,6 +51,11 @@ service cloud.firestore {
              email.matches("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$");
     }
 
+    // Check if user is an admin
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email in ['aneeshairdresser@gmail.com', 'aneesimran@outlook.com'];
+    }
+
     // ===============================================================
     // Domain Validators
     // ===============================================================
@@ -183,6 +188,22 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isValidCustomerCreate(request.resource.data);
       allow update, delete: if false;
+    }
+
+    // ----- BARBER SCHEDULES -----
+    // Read: allowed (needed for generating slots client-side)
+    // Write: only admins
+    match /barberSchedules/{barberId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ----- BLOCKED SLOTS -----
+    // Read: allowed (needed for filtering available slots client-side)
+    // Write: only admins
+    match /blockedSlots/{slotId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

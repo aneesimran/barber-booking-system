@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 /**
  * Firebase configuration — all values read from environment variables.
@@ -23,4 +24,7 @@ const db = isAppsEmpty
   ? initializeFirestore(app, { experimentalForceLongPolling: true }) 
   : getFirestore(app);
 
-export { app, db };
+// Auth instance
+const auth = getAuth(app);
+
+export { app, db, auth };

@@ -16,13 +16,14 @@ export const barbers = [
     reviewCount: 230,
     workingHours: {
       mon: { start: "09:00", end: "18:00" },
-      tue: { start: "09:00", end: "18:00" },
-      wed: { start: "09:00", end: "18:00" },
+      tue: null, // closed
+      wed: null, // closed
       thu: { start: "09:00", end: "18:00" },
       fri: { start: "09:00", end: "18:00" },
       sat: { start: "09:00", end: "18:00" },
       sun: null, // closed
     },
+    lunchBreak: { start: "13:40", end: "14:00" },
   },
   {
     id: "ali",
@@ -42,6 +43,7 @@ export const barbers = [
       sat: { start: "09:00", end: "18:00" },
       sun: null, // closed
     },
+    lunchBreak: { start: "14:00", end: "14:20" },
   },
 ];
 
