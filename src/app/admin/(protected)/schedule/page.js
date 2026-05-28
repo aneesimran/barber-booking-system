@@ -272,29 +272,31 @@ export default function SchedulePage() {
               <h2 className="font-bold text-lg text-white">Daily Lunch Break</h2>
               <p className="text-xs text-[var(--text-muted)] mt-1">This time will be automatically blocked off every working day.</p>
             </div>
-            <div className="p-6 flex items-center gap-4">
-              <button
-                onClick={toggleLunch}
-                className={`w-12 h-6 rounded-full relative transition-colors ${schedule.lunchBreak ? 'bg-[var(--gold)]' : 'bg-[#333]'}`}
-              >
-                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${schedule.lunchBreak ? 'left-7 bg-[#0a0a0a]' : 'left-1'}`} />
-              </button>
-              <span className="text-sm font-medium">{schedule.lunchBreak ? "Enabled" : "Disabled"}</span>
+            <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleLunch}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${schedule.lunchBreak ? 'bg-[var(--gold)]' : 'bg-[#333]'}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${schedule.lunchBreak ? 'left-7 bg-[#0a0a0a]' : 'left-1'}`} />
+                </button>
+                <span className="text-sm font-medium text-white">{schedule.lunchBreak ? "Enabled" : "Disabled"}</span>
+              </div>
               
               {schedule.lunchBreak && (
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2.5 bg-[#0a0a0a] sm:bg-transparent border border-[#222] sm:border-0 rounded-lg p-2.5 sm:p-0 justify-center w-full sm:w-auto">
                   <input
                     type="time"
                     value={schedule.lunchBreak.start}
                     onChange={(e) => updateLunch('start', e.target.value)}
-                    className="bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 focus:border-[var(--gold)] focus:outline-none"
+                    className="bg-[#0a0a0a] border border-[#333] rounded px-3 py-1.5 sm:py-2 focus:border-[var(--gold)] focus:outline-none text-white text-center font-medium text-sm"
                   />
-                  <span className="text-[var(--text-muted)]">to</span>
+                  <span className="text-xs text-[var(--text-muted)] font-medium">to</span>
                   <input
                     type="time"
                     value={schedule.lunchBreak.end}
                     onChange={(e) => updateLunch('end', e.target.value)}
-                    className="bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 focus:border-[var(--gold)] focus:outline-none"
+                    className="bg-[#0a0a0a] border border-[#333] rounded px-3 py-1.5 sm:py-2 focus:border-[var(--gold)] focus:outline-none text-white text-center font-medium text-sm"
                   />
                 </div>
               )}
