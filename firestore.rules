@@ -188,7 +188,8 @@ service cloud.firestore {
     match /customers/{customerId} {
       allow read: if true;
       allow create: if isValidCustomerCreate(request.resource.data);
-      allow update, delete: if false;
+      allow update: if isAdmin() || (request.resource.data.email == resource.data.email);
+      allow delete: if false;
     }
 
     // ----- BARBER SCHEDULES -----

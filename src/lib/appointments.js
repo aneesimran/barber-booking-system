@@ -7,6 +7,7 @@ import {
   serverTimestamp,
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { barbers, dayKeys, shopInfo } from "@/config/barbers";
@@ -253,7 +254,28 @@ async function createOrFindCustomerRest(data) {
     const results = await queryRes.json();
     for (const item of results) {
       if (item.document) {
-        return item.document.name.split("/").pop();
+        const docId = item.document.name.split("/").pop();
+        const fields = item.document.fields || {};
+        const existingStripeCustomerId = fields.stripeCustomerId?.stringValue;
+        if (data.stripeCustomerId && existingStripeCustomerId !== data.stripeCustomerId) {
+          // Update customer document via PATCH REST API
+          const updateUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/customers/${docId}?updateMask.fieldPaths=stripeCustomerId`;
+          const updateBody = {
+            fields: {
+              stripeCustomerId: { stringValue: data.stripeCustomerId }
+            }
+          };
+          try {
+            await fetch(updateUrl, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(updateBody)
+            });
+          } catch (err) {
+            console.error("Error updating customer stripeCustomerId via REST:", err);
+          }
+        }
+        return docId;
       }
     }
   }
@@ -574,8 +596,18 @@ export async function createOrFindCustomer(data) {
   const snapshot = await getDocs(q);
 
   if (!snapshot.empty) {
-    // Update existing customer name/phone if needed
-    return snapshot.docs[0].id;
+    const docSnap = snapshot.docs[0];
+    const existingData = docSnap.data();
+    // Update stripeCustomerId if it is new/different
+    if (data.stripeCustomerId && existingData.stripeCustomerId !== data.stripeCustomerId) {
+      try {
+        const docRef = doc(db, "customers", docSnap.id);
+        await updateDoc(docRef, { stripeCustomerId: data.stripeCustomerId });
+      } catch (err) {
+        console.error("Error updating stripeCustomerId for customer:", err);
+      }
+    }
+    return docSnap.id;
   }
 
   // Create new customer
