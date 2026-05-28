@@ -33,8 +33,8 @@ export default function ProgressBar({ currentStep }) {
                   isCompleted
                     ? "bg-[var(--gold)] text-[#0a0a0a] shadow-[0_0_15px_rgba(201,168,76,0.3)]"
                     : isActive
-                    ? "bg-[var(--gold)]/20 border-2 border-[var(--gold)] text-[var(--gold)] shadow-[0_0_20px_rgba(201,168,76,0.15)]"
-                    : "bg-[var(--card-bg)] border border-[var(--glass-border)] text-[var(--text-muted)]"
+                    ? "bg-[#0a0a0a] border-2 border-[var(--gold)] text-[var(--gold)] shadow-[0_0_20px_rgba(201,168,76,0.15)]"
+                    : "bg-[#0a0a0a] border border-[var(--glass-border)] text-[var(--text-muted)]"
                 }`}
               >
                 {isCompleted ? (
