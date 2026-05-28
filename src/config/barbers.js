@@ -31,7 +31,7 @@ export const barbers = [
     role: "Barber",
     bio: "Ali brings fresh energy and a keen eye for trending styles. Known for his attention to detail and friendly approach.",
     specialties: ["Modern Fades", "Scissor Cuts", "Line-Ups", "Beard Trims"],
-    image: "/images/ali.png",
+    image: "/images/ali.jpg",
     rating: 4.8,
     reviewCount: 145,
     workingHours: {
