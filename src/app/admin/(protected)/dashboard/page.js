@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { barbers } from "@/config/barbers";
 import { formatLocalDate } from "@/lib/appointments";
@@ -16,6 +16,24 @@ export default function DashboardPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [modalError, setModalError] = useState("");
   const [modalSuccess, setModalSuccess] = useState("");
+
+  const [selectedBlockedSlot, setSelectedBlockedSlot] = useState(null);
+  const [unblockingLoading, setUnblockingLoading] = useState(false);
+
+  const handleUnblockFromDashboard = async () => {
+    if (!selectedBlockedSlot) return;
+    setUnblockingLoading(true);
+    try {
+      await deleteDoc(doc(db, "blockedSlots", selectedBlockedSlot.id));
+      setAppointments(prev => prev.filter(item => item.id !== selectedBlockedSlot.id));
+      setSelectedBlockedSlot(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to unblock slot: " + (err.message || "Unknown error"));
+    } finally {
+      setUnblockingLoading(false);
+    }
+  };
 
   const handleCancelBooking = async () => {
     if (!selectedAppointment) return;
@@ -98,22 +116,42 @@ export default function DashboardPage() {
     const fetchBookings = async () => {
       setLoading(true);
       try {
-        const q = query(
+        // Query appointments
+        const apptQ = query(
           collection(db, "appointments"),
           where("date", "==", selectedDate)
         );
-        const snap = await getDocs(q);
+        const apptSnap = await getDocs(apptQ);
         
         const bookingsData = [];
-        for (const d of snap.docs) {
+        for (const d of apptSnap.docs) {
           const appt = d.data();
           const customerSnap = await getDoc(doc(db, "customers", appt.customerId));
           const customer = customerSnap.exists() ? customerSnap.data() : { name: "Unknown", phone: "", email: "" };
-          bookingsData.push({ id: d.id, ...appt, customer });
+          bookingsData.push({ id: d.id, ...appt, customer, isBlockedSlot: false });
         }
         
-        bookingsData.sort((a, b) => a.time.localeCompare(b.time));
-        setAppointments(bookingsData);
+        // Query blocked slots
+        const blockedQ = query(
+          collection(db, "blockedSlots"),
+          where("date", "==", selectedDate)
+        );
+        const blockedSnap = await getDocs(blockedQ);
+        const blockedData = blockedSnap.docs.map(doc => {
+          const b = doc.data();
+          return {
+            id: doc.id,
+            barberId: b.barberId,
+            date: b.date,
+            time: b.time,
+            reason: b.reason || "Manual Block",
+            isBlockedSlot: true
+          };
+        });
+
+        const combined = [...bookingsData, ...blockedData];
+        combined.sort((a, b) => a.time.localeCompare(b.time));
+        setAppointments(combined);
       } catch (err) {
         console.error("Error fetching bookings:", err);
       } finally {
@@ -146,53 +184,85 @@ export default function DashboardPage() {
         </div>
       ) : appointments.length === 0 ? (
         <div className="bg-[#111] border border-[#222] rounded-xl p-8 text-center text-[var(--text-muted)]">
-          No bookings found for this date.
+          No bookings or blocked slots found for this date.
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {barbers.map(barber => {
             const barberAppts = appointments.filter(a => a.barberId === barber.id);
+            const bookingsCount = barberAppts.filter(a => !a.isBlockedSlot).length;
+            const blockedCount = barberAppts.filter(a => a.isBlockedSlot).length;
+
             return (
               <div key={barber.id} className="bg-[#111] border border-[#222] rounded-xl overflow-hidden">
                 <div className="bg-[#1a1a1a] p-4 border-b border-[#222] flex justify-between items-center">
                   <h2 className="font-bold text-lg">{barber.name}'s Schedule</h2>
-                  <span className="text-xs bg-[var(--gold)]/10 text-[var(--gold)] px-2 py-1 rounded-full">
-                    {barberAppts.length} appointments
+                  <span className="text-xs bg-[var(--gold)]/10 text-[var(--gold)] px-2 py-1 rounded-full font-medium">
+                    {bookingsCount} {bookingsCount === 1 ? "booking" : "bookings"}
+                    {blockedCount > 0 && ` • ${blockedCount} blocked`}
                   </span>
                 </div>
                 <div className="p-4 space-y-3">
                   {barberAppts.length === 0 ? (
-                    <p className="text-sm text-[var(--text-muted)] italic py-4 text-center">No bookings yet.</p>
+                    <p className="text-sm text-[var(--text-muted)] italic py-4 text-center">No schedule entries.</p>
                   ) : (
-                    barberAppts.map(appt => (
-                      <div 
-                        key={appt.id} 
-                        onClick={() => setSelectedAppointment(appt)}
-                        className="flex gap-4 p-3 rounded-lg border border-[#222] bg-[#0a0a0a] hover:border-[var(--gold)]/50 cursor-pointer hover:bg-white/[0.02] transition-all"
-                      >
-                        <div className="text-center min-w-[60px] shrink-0 border-r border-[#222] pr-4">
-                          <p className="text-lg font-bold text-[var(--gold)]">{appt.time}</p>
-                          <p className="text-[10px] uppercase text-[var(--text-muted)]">20 Min</p>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white truncate">{appt.customer.name}</p>
-                          <div className="text-xs text-[var(--text-muted)] mt-1 space-y-0.5">
-                            <p className="truncate">{appt.customer.phone}</p>
-                            <p className="truncate" title={appt.customer.email}>{appt.customer.email}</p>
+                    barberAppts.map(item => {
+                      if (item.isBlockedSlot) {
+                        return (
+                          <div 
+                            key={item.id} 
+                            onClick={() => setSelectedBlockedSlot(item)}
+                            className="flex gap-4 p-3 rounded-lg border border-red-500/10 bg-red-500/5 hover:border-red-500/30 cursor-pointer hover:bg-red-500/[0.08] transition-all"
+                          >
+                            <div className="text-center min-w-[60px] shrink-0 border-r border-red-500/10 pr-4">
+                              <p className="text-lg font-bold text-red-400">{item.time}</p>
+                              <p className="text-[10px] uppercase text-red-400/60">Blocked</p>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-white truncate">Blocked Time Slot</p>
+                              <div className="text-xs text-[var(--text-muted)] mt-1 space-y-0.5">
+                                <p className="truncate italic">Reason: {item.reason}</p>
+                              </div>
+                            </div>
+                            <div className="shrink-0 flex items-start">
+                              <span className="text-[10px] px-2 py-1 rounded uppercase tracking-wider bg-red-500/10 text-red-400">
+                                Blocked
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div 
+                          key={item.id} 
+                          onClick={() => setSelectedAppointment(item)}
+                          className="flex gap-4 p-3 rounded-lg border border-[#222] bg-[#0a0a0a] hover:border-[var(--gold)]/50 cursor-pointer hover:bg-white/[0.02] transition-all"
+                        >
+                          <div className="text-center min-w-[60px] shrink-0 border-r border-[#222] pr-4">
+                            <p className="text-lg font-bold text-[var(--gold)]">{item.time}</p>
+                            <p className="text-[10px] uppercase text-[var(--text-muted)]">20 Min</p>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-white truncate">{item.customer.name}</p>
+                            <div className="text-xs text-[var(--text-muted)] mt-1 space-y-0.5">
+                              <p className="truncate">{item.customer.phone}</p>
+                              <p className="truncate" title={item.customer.email}>{item.customer.email}</p>
+                            </div>
+                          </div>
+                          <div className="shrink-0 flex items-start">
+                            <span className={`text-[10px] px-2 py-1 rounded uppercase tracking-wider ${
+                              item.status === "confirmed" ? "bg-green-500/10 text-green-400" : 
+                              item.status === "cancelled" ? "bg-red-500/10 text-red-400" :
+                              item.status === "no-show" ? "bg-amber-500/10 text-amber-400" :
+                              "bg-gray-500/10 text-gray-400"
+                            }`}>
+                              {item.status}
+                            </span>
                           </div>
                         </div>
-                        <div className="shrink-0 flex items-start">
-                          <span className={`text-[10px] px-2 py-1 rounded uppercase tracking-wider ${
-                            appt.status === "confirmed" ? "bg-green-500/10 text-green-400" : 
-                            appt.status === "cancelled" ? "bg-red-500/10 text-red-400" :
-                            appt.status === "no-show" ? "bg-amber-500/10 text-amber-400" :
-                            "bg-gray-500/10 text-gray-400"
-                          }`}>
-                            {appt.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -301,6 +371,62 @@ export default function DashboardPage() {
                 Close
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Blocked Slot Details Modal */}
+      {selectedBlockedSlot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-md bg-[#111] border border-[#222] rounded-2xl p-6 shadow-2xl animate-fade-in-up">
+            <button 
+              onClick={() => {
+                setSelectedBlockedSlot(null);
+              }}
+              className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Blocked Time Slot
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] mb-6">Details of blocked slot and option to unblock.</p>
+
+            <div className="space-y-4 mb-6 bg-[#0a0a0a] p-4 rounded-xl border border-[#222]">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Time & Date</span>
+                  <p className="text-sm font-medium text-white">{selectedBlockedSlot.time} on {selectedBlockedSlot.date}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Barber</span>
+                  <p className="text-sm font-medium text-white capitalize">{selectedBlockedSlot.barberId}</p>
+                </div>
+              </div>
+
+              <div className="border-t border-[#222] pt-3">
+                <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Reason for Block</span>
+                <p className="text-sm font-semibold text-white mt-1 break-all">{selectedBlockedSlot.reason}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSelectedBlockedSlot(null)}
+                className="flex-1 bg-[#222] hover:bg-[#333] text-white py-2.5 rounded-lg text-sm font-semibold transition-all"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleUnblockFromDashboard}
+                disabled={unblockingLoading}
+                className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {unblockingLoading && <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />}
+                Unblock Slot
+              </button>
+            </div>
           </div>
         </div>
       )}

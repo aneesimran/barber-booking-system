@@ -14,6 +14,11 @@ export default function BlockedSlotsPage() {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Modal States for Blocking/Unblocking
+  const [selectedSlotForModal, setSelectedSlotForModal] = useState(null);
+  const [modalAction, setModalAction] = useState(null); // 'block' or 'unblock'
+  const [reason, setReason] = useState("");
+
   useEffect(() => {
     const fetchSlots = async () => {
       setLoading(true);
@@ -42,6 +47,7 @@ export default function BlockedSlotsPage() {
             isBooked,
             isBlocked: !!blockedDoc,
             blockedId: blockedDoc ? blockedDoc.id : null,
+            reason: blockedDoc ? blockedDoc.reason : null,
             loading: false,
           };
         });
@@ -57,33 +63,79 @@ export default function BlockedSlotsPage() {
     }
   }, [selectedBarberId, selectedDate]);
 
-  const toggleBlock = async (slot) => {
-    if (slot.isBooked) return; // cannot block already booked slots
+  const handleSlotClick = (slot) => {
+    if (slot.isBooked) return;
+    setSelectedSlotForModal(slot);
+    if (slot.isBlocked) {
+      setModalAction("unblock");
+    } else {
+      setModalAction("block");
+      setReason("");
+    }
+  };
+
+  const executeBlock = async () => {
+    if (!selectedSlotForModal) return;
     
-    const isBlocking = !slot.isBlocked;
-    setSlots(prev => prev.map(s => s.time === slot.time ? { ...s, isBlocked: isBlocking, loading: true } : s));
+    const slotTime = selectedSlotForModal.time;
+    const finalReason = reason.trim() || "Manual Block";
+    
+    // Set loading in UI list
+    setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: true } : s));
+    
+    // Close modal
+    setSelectedSlotForModal(null);
+    setModalAction(null);
     
     try {
-      if (isBlocking) {
-        const newDoc = await addDoc(collection(db, "blockedSlots"), {
-          barberId: selectedBarberId,
-          date: selectedDate,
-          time: slot.time,
-          reason: "Manual Block",
-          createdAt: serverTimestamp(),
-          createdBy: auth.currentUser?.uid || "unknown"
-        });
-        setSlots(prev => prev.map(s => s.time === slot.time ? { ...s, blockedId: newDoc.id, loading: false } : s));
-      } else {
-        if (slot.blockedId) {
-          await deleteDoc(doc(db, "blockedSlots", slot.blockedId));
-        }
-        setSlots(prev => prev.map(s => s.time === slot.time ? { ...s, blockedId: null, loading: false } : s));
-      }
+      const newDoc = await addDoc(collection(db, "blockedSlots"), {
+        barberId: selectedBarberId,
+        date: selectedDate,
+        time: slotTime,
+        reason: finalReason,
+        createdAt: serverTimestamp(),
+        createdBy: auth.currentUser?.uid || "unknown"
+      });
+      setSlots(prev => prev.map(s => s.time === slotTime ? { 
+        ...s, 
+        isBlocked: true, 
+        blockedId: newDoc.id, 
+        reason: finalReason,
+        loading: false 
+      } : s));
     } catch (err) {
       console.error(err);
-      setSlots(prev => prev.map(s => s.time === slot.time ? { ...s, isBlocked: slot.isBlocked, loading: false } : s));
-      alert("Failed to update blocked slot. Check permissions.");
+      setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: false } : s));
+      alert("Failed to block slot. Check permissions.");
+    }
+  };
+
+  const executeUnblock = async () => {
+    if (!selectedSlotForModal || !selectedSlotForModal.blockedId) return;
+    
+    const slotTime = selectedSlotForModal.time;
+    const blockedId = selectedSlotForModal.blockedId;
+    
+    // Set loading in UI list
+    setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: true } : s));
+    
+    // Close modal
+    setSelectedSlotForModal(null);
+    setModalAction(null);
+    
+    try {
+      await deleteDoc(doc(db, "blockedSlots", blockedId));
+      setSlots(prev => prev.map(s => s.time === slotTime ? { 
+        ...s, 
+        isBlocked: false, 
+        blockedId: null, 
+        reason: null,
+        loading: false 
+      } : s));
+    } catch (err) {
+      console.error(err);
+      setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: false } : s));
+      alert("Failed to unblock slot. Check permissions.");
     }
   };
 
@@ -140,7 +192,7 @@ export default function BlockedSlotsPage() {
                 <button
                   key={slot.time}
                   disabled={isBooked || isLoading}
-                  onClick={() => toggleBlock(slot)}
+                  onClick={() => handleSlotClick(slot)}
                   className={`relative py-3 px-2 rounded-xl text-sm font-medium transition-all duration-300 ${buttonClass}`}
                 >
                   {isLoading && (
@@ -155,6 +207,100 @@ export default function BlockedSlotsPage() {
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Block/Unblock Modal */}
+      {selectedSlotForModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-md bg-[#111] border border-[#222] rounded-2xl p-6 shadow-2xl animate-fade-in-up">
+            <button 
+              onClick={() => {
+                setSelectedSlotForModal(null);
+                setModalAction(null);
+              }}
+              className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            {modalAction === "block" ? (
+              <>
+                <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Block Time Slot
+                </h3>
+                <p className="text-xs text-[var(--text-muted)] mb-6">
+                  Block {selectedSlotForModal.time} on {selectedDate} for {barbers.find(b => b.id === selectedBarberId)?.name}.
+                </p>
+
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2 font-medium">
+                      Reason / Description (Optional)
+                    </label>
+                    <input 
+                      type="text"
+                      placeholder="e.g., Personal appointment, Maintenance..."
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      className="w-full bg-[#0a0a0a] border border-[#333] text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-[var(--gold)] text-sm"
+                      maxLength={100}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setSelectedSlotForModal(null);
+                      setModalAction(null);
+                    }}
+                    className="flex-1 bg-[#222] hover:bg-[#333] text-white py-2.5 rounded-lg text-sm font-semibold transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={executeBlock}
+                    className="flex-1 bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-[#0a0a0a] py-2.5 rounded-lg text-sm font-bold transition-all hover:shadow-[0_0_15px_rgba(201,168,76,0.2)]"
+                  >
+                    Block Slot
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Unblock Time Slot
+                </h3>
+                <p className="text-xs text-[var(--text-muted)] mb-6">
+                  Unblock {selectedSlotForModal.time} on {selectedDate} for {barbers.find(b => b.id === selectedBarberId)?.name}.
+                </p>
+
+                <div className="bg-[#0a0a0a] p-4 rounded-xl border border-[#222] mb-6">
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Current Block Reason</span>
+                  <p className="font-semibold text-white mt-1 text-sm break-all">{selectedSlotForModal.reason || "Manual Block"}</p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setSelectedSlotForModal(null);
+                      setModalAction(null);
+                    }}
+                    className="flex-1 bg-[#222] hover:bg-[#333] text-white py-2.5 rounded-lg text-sm font-semibold transition-all"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={executeUnblock}
+                    className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                  >
+                    Unblock Slot
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
