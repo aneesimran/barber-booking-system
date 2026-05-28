@@ -26,7 +26,14 @@ export async function GET(request) {
 
   try {
     const slots = await getAvailableSlots(barberId, date);
-    return Response.json({ slots, date: dateString, barberId });
+    return Response.json(
+      { slots, date: dateString, barberId },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0, must-revalidate",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching available slots:", error);
     return Response.json(

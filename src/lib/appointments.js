@@ -34,7 +34,7 @@ async function getBarberScheduleRest(barberId) {
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/barberSchedules/${barberId}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) {
       if (res.status === 404) return null;
       throw new Error(`REST schedule fetch failed: ${res.statusText}`);
@@ -78,7 +78,7 @@ async function getBarberDateScheduleRest(barberId, dateString) {
   const docId = `${barberId}_${dateString}`;
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/dateSchedules/${docId}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) {
       if (res.status === 404) return null;
       throw new Error(`REST date schedule fetch failed: ${res.statusText}`);
@@ -147,7 +147,8 @@ async function getBookedSlotsRest(barberId, dateString) {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(query)
+      body: JSON.stringify(query),
+      cache: "no-store"
     });
     
     if (!res.ok) throw new Error(`REST query error: ${res.statusText}`);
@@ -205,7 +206,8 @@ async function getBlockedSlotsRest(barberId, dateString) {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(query)
+      body: JSON.stringify(query),
+      cache: "no-store"
     });
     
     if (!res.ok) throw new Error(`REST blocked slots query error: ${res.statusText}`);
@@ -247,7 +249,8 @@ async function createOrFindCustomerRest(data) {
   const queryRes = await fetch(queryUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(queryBody)
+    body: JSON.stringify(queryBody),
+    cache: "no-store"
   });
   
   if (queryRes.ok) {
@@ -269,7 +272,8 @@ async function createOrFindCustomerRest(data) {
             await fetch(updateUrl, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(updateBody)
+              body: JSON.stringify(updateBody),
+              cache: "no-store"
             });
           } catch (err) {
             console.error("Error updating customer stripeCustomerId via REST:", err);
@@ -295,7 +299,8 @@ async function createOrFindCustomerRest(data) {
   const createRes = await fetch(createUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(customerDoc)
+    body: JSON.stringify(customerDoc),
+    cache: "no-store"
   });
   
   if (!createRes.ok) {
@@ -327,7 +332,8 @@ async function createAppointmentRest(data) {
   const createRes = await fetch(createUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(appointmentDoc)
+    body: JSON.stringify(appointmentDoc),
+    cache: "no-store"
   });
   
   if (!createRes.ok) {
