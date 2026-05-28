@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { barbers } from "@/config/barbers";
 import { formatLocalDate } from "@/lib/appointments";
 
@@ -72,9 +72,13 @@ export default function DashboardPage() {
         throw new Error("No credit card was vaulted for this customer. Cannot process charge.");
       }
 
+      const token = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/admin/charge-no-show", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           stripeCustomerId,
           customerName: selectedAppointment.customer.name
