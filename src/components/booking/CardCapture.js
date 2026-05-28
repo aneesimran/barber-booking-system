@@ -95,7 +95,7 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
 
       <div className="flex items-start gap-2 mb-5 px-1">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" className="mt-0.5 shrink-0"><rect x="3" y="11" width="18" height="10" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
-        <p className="text-xs text-[var(--text-muted)] leading-relaxed">Your card will <strong className="text-[var(--text-secondary)]">not be charged</strong>. We securely store your details for no-show protection only.</p>
+        <p className="text-xs text-[var(--text-muted)] leading-relaxed">Your card will <strong className="text-[var(--text-secondary)]">not be charged now</strong>. We securely store your details for no-show protection, and you will only be charged <strong className="text-[var(--text-secondary)]">£5.00</strong> if there is a no-show. If you need to cancel, please contact us as soon as possible.</p>
       </div>
 
       <button type="submit" disabled={!stripe || processing} className="btn-gold w-full text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" id="confirm-booking-btn">
