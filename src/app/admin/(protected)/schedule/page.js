@@ -224,45 +224,45 @@ export default function SchedulePage() {
             <div className="bg-[#1a1a1a] p-4 border-b border-[#222]">
               <h2 className="font-bold text-lg text-white">Weekly Schedule</h2>
             </div>
-            <div className="p-4">
-              <div className="grid grid-cols-[100px_1fr] gap-y-4 items-center">
-                {dayKeys.map((day) => {
-                  const hours = schedule.workingHours[day];
-                  const isOpen = !!hours;
-                  return (
-                    <div key={day} className="contents">
-                      <div className="font-medium capitalize text-[var(--text-muted)]">{dayLabels[day]}</div>
-                      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="p-4 space-y-3">
+              {dayKeys.map((day) => {
+                const hours = schedule.workingHours[day];
+                const isOpen = !!hours;
+                return (
+                  <div key={day} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-[#0a0a0a] border border-[#222] gap-3">
+                    <div className="flex items-center justify-between sm:justify-start gap-4">
+                      <div className="font-semibold capitalize text-white w-20">{dayLabels[day]}</div>
+                      <div className="flex items-center gap-2.5">
                         <button
                           onClick={() => toggleDay(day)}
                           className={`w-12 h-6 rounded-full relative transition-colors ${isOpen ? 'bg-[var(--gold)]' : 'bg-[#333]'}`}
                         >
                           <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${isOpen ? 'left-7 bg-[#0a0a0a]' : 'left-1'}`} />
                         </button>
-                        <span className="text-xs uppercase w-12 text-center text-[var(--text-muted)]">{isOpen ? "Open" : "Closed"}</span>
-                        
-                        {isOpen && (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="time"
-                              value={hours.start}
-                              onChange={(e) => updateDay(day, 'start', e.target.value)}
-                              className="bg-[#0a0a0a] border border-[#333] rounded px-2 py-1 text-sm focus:border-[var(--gold)] focus:outline-none"
-                            />
-                            <span className="text-[var(--text-muted)]">to</span>
-                            <input
-                              type="time"
-                              value={hours.end}
-                              onChange={(e) => updateDay(day, 'end', e.target.value)}
-                              className="bg-[#0a0a0a] border border-[#333] rounded px-2 py-1 text-sm focus:border-[var(--gold)] focus:outline-none"
-                            />
-                          </div>
-                        )}
+                        <span className="text-xs uppercase w-12 text-[var(--text-muted)]">{isOpen ? "Open" : "Closed"}</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                    
+                    {isOpen && (
+                      <div className="flex items-center gap-2.5 bg-[#111] sm:bg-transparent border border-[#333] sm:border-0 rounded-lg p-2 sm:p-0 justify-center sm:justify-end">
+                        <input
+                          type="time"
+                          value={hours.start}
+                          onChange={(e) => updateDay(day, 'start', e.target.value)}
+                          className="bg-[#0a0a0a] border border-[#333] rounded px-3 py-1.5 sm:py-1 text-sm focus:border-[var(--gold)] focus:outline-none text-white text-center font-medium"
+                        />
+                        <span className="text-xs text-[var(--text-muted)] font-medium">to</span>
+                        <input
+                          type="time"
+                          value={hours.end}
+                          onChange={(e) => updateDay(day, 'end', e.target.value)}
+                          className="bg-[#0a0a0a] border border-[#333] rounded px-3 py-1.5 sm:py-1 text-sm focus:border-[var(--gold)] focus:outline-none text-white text-center font-medium"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
