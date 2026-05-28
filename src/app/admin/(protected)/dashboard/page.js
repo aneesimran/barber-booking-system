@@ -135,8 +135,8 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      setLoading(true);
+    const fetchBookings = async (showSkeleton = false) => {
+      if (showSkeleton) setLoading(true);
       try {
         // Query appointments
         const apptQ = query(
@@ -177,10 +177,19 @@ export default function DashboardPage() {
       } catch (err) {
         console.error("Error fetching bookings:", err);
       } finally {
-        setLoading(false);
+        if (showSkeleton) setLoading(false);
       }
     };
-    fetchBookings();
+
+    // Initial load (show loading spinner)
+    fetchBookings(true);
+
+    // Auto-refresh every 5 minutes (300,000 ms) in the background
+    const intervalId = setInterval(() => {
+      fetchBookings(false);
+    }, 300000);
+
+    return () => clearInterval(intervalId);
   }, [selectedDate]);
 
   return (
