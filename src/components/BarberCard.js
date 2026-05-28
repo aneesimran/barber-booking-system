@@ -11,7 +11,7 @@ export default function BarberCard({ barber, index }) {
     >
       {/* Image container */}
       <div className="relative overflow-hidden rounded-t-[1.25rem]">
-        <div className="aspect-[4/5] relative">
+        <div className="aspect-square relative">
           <Image
             src={barber.image}
             alt={`${barber.name} — ${barber.role}`}

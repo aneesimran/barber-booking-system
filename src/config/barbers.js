@@ -11,7 +11,7 @@ export const barbers = [
     role: "Owner & Barber",
     bio: "With years of experience and a passion for precision, Imran delivers sharp, clean cuts every time. Specialising in modern fades and classic styles.",
     specialties: ["Skin Fades", "Beard Shaping", "Classic Cuts", "Hair Design"],
-    image: "/images/imran.png",
+    image: "/images/imran.jpg",
     rating: 4.9,
     reviewCount: 230,
     workingHours: {
