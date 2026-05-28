@@ -174,11 +174,11 @@ export default function DashboardPage() {
                           <p className="text-lg font-bold text-[var(--gold)]">{appt.time}</p>
                           <p className="text-[10px] uppercase text-[var(--text-muted)]">20 Min</p>
                         </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-white">{appt.customer.name}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-white truncate">{appt.customer.name}</p>
                           <div className="text-xs text-[var(--text-muted)] mt-1 space-y-0.5">
-                            <p>{appt.customer.phone}</p>
-                            <p>{appt.customer.email}</p>
+                            <p className="truncate">{appt.customer.phone}</p>
+                            <p className="truncate" title={appt.customer.email}>{appt.customer.email}</p>
                           </div>
                         </div>
                         <div className="shrink-0 flex items-start">
@@ -233,11 +233,11 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div className="space-y-4 mb-6 bg-[#0a0a0a] p-4 rounded-xl border border-[#222]">
+            <div className="space-y-4 mb-6 bg-[#0a0a0a] p-4 rounded-xl border border-[#222] min-w-0">
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Customer</span>
-                <p className="font-semibold text-white">{selectedAppointment.customer.name}</p>
-                <p className="text-xs text-[var(--text-muted)]">{selectedAppointment.customer.phone} • {selectedAppointment.customer.email}</p>
+                <p className="font-semibold text-white truncate">{selectedAppointment.customer.name}</p>
+                <p className="text-xs text-[var(--text-muted)] break-all">{selectedAppointment.customer.phone} • {selectedAppointment.customer.email}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 border-t border-[#222] pt-3">
