@@ -43,7 +43,7 @@ export default function DatePicker({ barberId, selectedDate, onSelectDate }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    for (let i = 1; i <= shopInfo.bookingWindowDays; i++) {
+    for (let i = 0; i < shopInfo.bookingWindowDays; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
 

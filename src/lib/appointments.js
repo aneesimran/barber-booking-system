@@ -440,7 +440,8 @@ export async function getAvailableSlots(barberId, date) {
       const [h, m] = time.split(":").map(Number);
       const slotDate = new Date(date);
       slotDate.setHours(h, m, 0, 0);
-      if (slotDate <= now) {
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+      if (slotDate <= oneHourFromNow) {
         available = false;
       }
     }
