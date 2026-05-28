@@ -5,7 +5,7 @@ import BarberCard from "./BarberCard";
 
 export default function BarberSelection() {
   return (
-    <section className="relative px-4 sm:px-6 pb-20" id="select-barber">
+    <section className="relative px-4 sm:px-6 pt-16 pb-20" id="select-barber">
       {/* Section heading */}
       <div className="text-center mb-10 opacity-0 animate-fade-in-up delay-200">
         <h2

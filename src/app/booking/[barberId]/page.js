@@ -8,7 +8,7 @@ export async function generateMetadata({ params }) {
   if (!barber) return { title: "Barber Not Found | Anees Hairdressers" };
   return {
     title: `Book with ${barber.name} | Anees Hairdressers`,
-    description: `Book a ${barber.role === "Senior Barber & Owner" ? "premium" : ""} haircut with ${barber.name} at Anees Hairdressers. Choose your date and time.`,
+    description: `Book a ${barber.id === "imran" ? "premium" : ""} haircut with ${barber.name} at Anees Hairdressers. Choose your date and time.`,
   };
 }
 

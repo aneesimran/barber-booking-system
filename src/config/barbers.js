@@ -7,8 +7,8 @@
 export const barbers = [
   {
     id: "imran",
-    name: "Imran",
-    role: "Senior Barber & Owner",
+    name: "Imran (Anees)",
+    role: "Owner & Barber",
     bio: "With years of experience and a passion for precision, Imran delivers sharp, clean cuts every time. Specialising in modern fades and classic styles.",
     specialties: ["Skin Fades", "Beard Shaping", "Classic Cuts", "Hair Design"],
     image: "/images/imran.png",
