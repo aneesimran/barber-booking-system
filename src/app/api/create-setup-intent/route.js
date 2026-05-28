@@ -28,8 +28,25 @@ export async function POST(request) {
     });
 
     let customer;
+    let savedCard = null;
+
     if (existingCustomers.data.length > 0) {
       customer = existingCustomers.data[0];
+      
+      // Look for saved card payment methods
+      const paymentMethods = await stripe.paymentMethods.list({
+        customer: customer.id,
+        type: "card",
+      });
+      if (paymentMethods.data.length > 0) {
+        const pm = paymentMethods.data[0];
+        savedCard = {
+          brand: pm.card.brand,
+          last4: pm.card.last4,
+          expMonth: pm.card.exp_month,
+          expYear: pm.card.exp_year,
+        };
+      }
     } else {
       // Create a new Stripe customer
       customer = await stripe.customers.create({
@@ -51,6 +68,7 @@ export async function POST(request) {
     return Response.json({
       clientSecret: setupIntent.client_secret,
       customerId: customer.id,
+      savedCard,
     });
   } catch (error) {
     console.error("Stripe SetupIntent error:", error);
