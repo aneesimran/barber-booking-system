@@ -98,8 +98,8 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 sm:p-8 max-w-4xl">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center items-start mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>Working Hours</h1>
           <p className="text-[var(--text-muted)]">Manage weekly schedules and lunch breaks.</p>
@@ -152,7 +152,7 @@ export default function SchedulePage() {
                   return (
                     <div key={day} className="contents">
                       <div className="font-medium capitalize text-[var(--text-muted)]">{dayLabels[day]}</div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                         <button
                           onClick={() => toggleDay(day)}
                           className={`w-12 h-6 rounded-full relative transition-colors ${isOpen ? 'bg-[var(--gold)]' : 'bg-[#333]'}`}

@@ -1,4 +1,4 @@
-import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminLayoutClient from "@/components/admin/AdminLayoutClient";
 import AuthGuard from "@/components/admin/AuthGuard";
 
 export const metadata = {
@@ -8,12 +8,7 @@ export const metadata = {
 export default function ProtectedAdminLayout({ children }) {
   return (
     <AuthGuard>
-      <div className="flex h-screen bg-[#0a0a0a] overflow-hidden text-white font-sans">
-        <AdminSidebar />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
-      </div>
+      <AdminLayoutClient>{children}</AdminLayoutClient>
     </AuthGuard>
   );
 }
