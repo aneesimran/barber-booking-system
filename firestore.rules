@@ -172,7 +172,8 @@ service cloud.firestore {
     match /appointments/{appointmentId} {
       allow read: if true;
       allow create: if isValidAppointmentCreate(request.resource.data);
-      allow update, delete: if false;
+      allow update: if isAdmin();
+      allow delete: if false;
     }
 
     // ----- CUSTOMERS -----
