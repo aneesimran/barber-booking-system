@@ -206,5 +206,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // ----- DATE SCHEDULE OVERRIDES -----
+    // Read: allowed (needed for filtering available slots client-side)
+    // Write: only admins
+    match /dateSchedules/{overrideId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

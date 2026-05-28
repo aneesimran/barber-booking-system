@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { barbers, dayKeys, shopInfo } from "@/config/barbers";
 import { formatLocalDate } from "@/lib/appointments";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -21,21 +21,38 @@ export default function DatePicker({ barberId, selectedDate, onSelectDate }) {
       lunchBreak: barber.lunchBreak
     };
   });
+  const [overrides, setOverrides] = useState({});
 
   useEffect(() => {
     if (!barberId) return;
-    const fetchSchedule = async () => {
+    const fetchScheduleAndOverrides = async () => {
       try {
+        // 1. Fetch weekly schedule
         const scheduleRef = doc(db, "barberSchedules", barberId);
         const snap = await getDoc(scheduleRef);
         if (snap.exists()) {
           setSchedule(snap.data());
         }
+
+        // 2. Fetch date overrides starting from today
+        const todayStr = formatLocalDate(new Date());
+        const q = query(
+          collection(db, "dateSchedules"),
+          where("barberId", "==", barberId),
+          where("date", ">=", todayStr)
+        );
+        const oSnap = await getDocs(q);
+        const overrideMap = {};
+        oSnap.docs.forEach((dDoc) => {
+          const data = dDoc.data();
+          overrideMap[data.date] = data;
+        });
+        setOverrides(overrideMap);
       } catch (err) {
         console.error("Error fetching dynamic schedule in DatePicker:", err);
       }
     };
-    fetchSchedule();
+    fetchScheduleAndOverrides();
   }, [barberId]);
 
   const dates = useMemo(() => {
@@ -47,20 +64,27 @@ export default function DatePicker({ barberId, selectedDate, onSelectDate }) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
 
+      const dateStr = formatLocalDate(date);
       const dayKey = dayKeys[date.getDay()];
-      const isWorking = schedule?.workingHours?.[dayKey] !== null && schedule?.workingHours?.[dayKey] !== undefined;
+
+      let isWorking = false;
+      if (dateStr in overrides) {
+        isWorking = overrides[dateStr].workingHours !== null && overrides[dateStr].workingHours !== undefined;
+      } else {
+        isWorking = schedule?.workingHours?.[dayKey] !== null && schedule?.workingHours?.[dayKey] !== undefined;
+      }
 
       result.push({
         date,
         dayLabel: dayLabels[date.getDay()],
         dayNumber: date.getDate(),
         month: monthLabels[date.getMonth()],
-        dateString: formatLocalDate(date),
+        dateString: dateStr,
         isWorking,
       });
     }
     return result;
-  }, [barberId, schedule]);
+  }, [barberId, schedule, overrides]);
 
   // Group by month for section headers
   const groupedByMonth = useMemo(() => {

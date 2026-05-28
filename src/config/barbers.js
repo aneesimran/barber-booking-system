@@ -15,12 +15,12 @@ export const barbers = [
     rating: 4.9,
     reviewCount: 230,
     workingHours: {
-      mon: { start: "09:00", end: "18:00" },
+      mon: { start: "10:00", end: "19:00" },
       tue: null, // closed
-      wed: null, // closed
-      thu: { start: "09:00", end: "18:00" },
-      fri: { start: "09:00", end: "18:00" },
-      sat: { start: "09:00", end: "18:00" },
+      wed: { start: "10:00", end: "19:00" },
+      thu: { start: "10:00", end: "19:00" },
+      fri: { start: "10:00", end: "19:00" },
+      sat: { start: "10:00", end: "19:00" },
       sun: null, // closed
     },
     lunchBreak: { start: "13:40", end: "14:00" },
@@ -35,12 +35,12 @@ export const barbers = [
     rating: 4.8,
     reviewCount: 145,
     workingHours: {
-      mon: { start: "09:00", end: "18:00" },
-      tue: { start: "09:00", end: "18:00" },
-      wed: { start: "09:00", end: "18:00" },
-      thu: { start: "09:00", end: "18:00" },
-      fri: { start: "09:00", end: "18:00" },
-      sat: { start: "09:00", end: "18:00" },
+      mon: { start: "10:00", end: "19:00" },
+      tue: { start: "10:00", end: "19:00" },
+      wed: null, // closed
+      thu: { start: "10:00", end: "19:00" },
+      fri: { start: "10:00", end: "19:00" },
+      sat: { start: "10:00", end: "19:00" },
       sun: null, // closed
     },
     lunchBreak: { start: "14:00", end: "14:20" },

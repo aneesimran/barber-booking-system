@@ -72,6 +72,46 @@ async function getBarberScheduleRest(barberId) {
   }
 }
 
+async function getBarberDateScheduleRest(barberId, dateString) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const docId = `${barberId}_${dateString}`;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/dateSchedules/${docId}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      throw new Error(`REST date schedule fetch failed: ${res.statusText}`);
+    }
+    const data = await res.json();
+    const fields = data.fields || {};
+    const schedule = {};
+    
+    if (fields.workingHours) {
+      if (fields.workingHours.nullValue !== undefined) {
+        schedule.workingHours = null;
+      } else if (fields.workingHours.mapValue) {
+        const start = fields.workingHours.mapValue.fields?.start?.stringValue;
+        const end = fields.workingHours.mapValue.fields?.end?.stringValue;
+        schedule.workingHours = { start, end };
+      }
+    }
+    
+    if (fields.lunchBreak) {
+      if (fields.lunchBreak.nullValue !== undefined) {
+        schedule.lunchBreak = null;
+      } else if (fields.lunchBreak.mapValue) {
+        const start = fields.lunchBreak.mapValue.fields?.start?.stringValue;
+        const end = fields.lunchBreak.mapValue.fields?.end?.stringValue;
+        schedule.lunchBreak = { start, end };
+      }
+    }
+    return schedule;
+  } catch (err) {
+    console.error("Error in getBarberDateScheduleRest:", err);
+    return null;
+  }
+}
+
 async function getBookedSlotsRest(barberId, dateString) {
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
@@ -385,6 +425,49 @@ export async function getBarberSchedule(barberId) {
 }
 
 /**
+ * Fetch a barber's schedule for a specific date, checking for overrides first, falling back to weekly.
+ * @param {string} barberId 
+ * @param {string} dateString - "YYYY-MM-DD"
+ * @returns {Promise<Object>} Schedule object
+ */
+export async function getBarberScheduleForDate(barberId, dateString) {
+  const [y, m, d] = dateString.split("-").map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  const dayKey = dayKeys[dateObj.getDay()];
+
+  // 1. Check for date-specific override
+  let dateOverride = null;
+  if (typeof window === "undefined") {
+    dateOverride = await getBarberDateScheduleRest(barberId, dateString);
+  } else {
+    try {
+      const docRef = doc(db, "dateSchedules", `${barberId}_${dateString}`);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        dateOverride = snap.data();
+      }
+    } catch (err) {
+      console.error("Error fetching date schedule override:", err);
+    }
+  }
+
+  if (dateOverride) {
+    return {
+      workingHours: {
+        [dayKey]: dateOverride.workingHours ? {
+          start: dateOverride.workingHours.start,
+          end: dateOverride.workingHours.end
+        } : null
+      },
+      lunchBreak: dateOverride.lunchBreak
+    };
+  }
+
+  // 2. Revert to weekly schedule
+  return getBarberSchedule(barberId);
+}
+
+/**
  * Fetch blocked slots for a barber on a specific date.
  * @param {string} barberId 
  * @param {string} dateString 
@@ -418,11 +501,11 @@ export async function getBlockedSlots(barberId, dateString) {
  * @returns {Promise<{time: string, available: boolean}[]>}
  */
 export async function getAvailableSlots(barberId, date) {
-  const schedule = await getBarberSchedule(barberId);
+  const dateString = formatLocalDate(date);
+  const schedule = await getBarberScheduleForDate(barberId, dateString);
   if (!schedule) return [];
 
   const allSlots = generateTimeSlots(schedule, date);
-  const dateString = formatLocalDate(date);
   
   const [bookedSlots, blockedSlots] = await Promise.all([
     getBookedSlots(barberId, dateString),

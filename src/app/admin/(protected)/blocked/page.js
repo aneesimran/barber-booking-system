@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, addDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { barbers } from "@/config/barbers";
-import { getBarberSchedule, generateTimeSlots, getBookedSlots, formatLocalDate } from "@/lib/appointments";
+import { getBarberScheduleForDate, generateTimeSlots, getBookedSlots, formatLocalDate } from "@/lib/appointments";
 
 export default function BlockedSlotsPage() {
   const [selectedBarberId, setSelectedBarberId] = useState(barbers[0].id);
@@ -26,7 +26,7 @@ export default function BlockedSlotsPage() {
         const [y, m, d] = selectedDate.split("-").map(Number);
         const localDate = new Date(y, m - 1, d);
         
-        const schedule = await getBarberSchedule(selectedBarberId);
+        const schedule = await getBarberScheduleForDate(selectedBarberId, selectedDate);
         const allTimes = generateTimeSlots(schedule, localDate);
         
         const bookedTimes = await getBookedSlots(selectedBarberId, selectedDate);
