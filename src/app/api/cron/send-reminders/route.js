@@ -133,7 +133,7 @@ export async function GET(request) {
 
           // Format readable time (e.g. 10:00 AM)
           const timeFormatted = `${h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-          const message = `Hi ${customerName || "there"}, this is a reminder for your haircut with ${barberName} today at ${timeFormatted} at Anees Hairdressers. See you soon!`;
+          const message = `Hi ${customerName || "there"}, this is a reminder for your appointment with ${barberName} today at ${timeFormatted} at Anees Hairdressers. Need to reschedule or cancel? Please call us directly on 07930383297. See you soon!`;
 
           try {
             // Send SMS
