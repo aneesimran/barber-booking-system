@@ -84,6 +84,19 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
         stripeSetupIntentId: "vaulted_payment_method",
       });
 
+      // Trigger confirmation email asynchronously
+      fetch("/api/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: customerDetails.email,
+          name: customerDetails.name,
+          barberId,
+          date,
+          time,
+        }),
+      }).catch((err) => console.error("Email trigger failed:", err));
+
       onSuccess({ success: true, appointmentId, message: "Booking confirmed using your saved card!" });
     } catch (err) {
       console.error("Saved card confirmation error:", err);
@@ -137,6 +150,19 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
         time,
         stripeSetupIntentId: setupIntent.id,
       });
+
+      // Trigger confirmation email asynchronously
+      fetch("/api/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: customerDetails.email,
+          name: customerDetails.name,
+          barberId,
+          date,
+          time,
+        }),
+      }).catch((err) => console.error("Email trigger failed:", err));
 
       onSuccess({ success: true, appointmentId, message: "Booking confirmed!" });
     } catch (err) {
