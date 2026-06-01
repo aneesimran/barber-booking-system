@@ -133,7 +133,7 @@ export async function GET(request) {
 
           // Format readable time (e.g. 10:00 AM)
           const timeFormatted = `${h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-          const message = `Hi ${customerName || "there"}, this is a reminder for your appointment with ${barberName} today at ${timeFormatted} at Anees Hairdressers. If you need to reach us, please call 07930383297. See you soon!`;
+          const message = `Hi ${customerName || "there"},\n\nThis is a reminder for your appointment with ${barberName} today at ${timeFormatted} at Anees Hairdressers.\n\nIf you need to reach us, please call 07930383297.\n\nSee you soon!`;
 
           try {
             // Send SMS
