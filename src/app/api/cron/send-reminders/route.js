@@ -148,12 +148,17 @@ export async function GET(request) {
               }
             };
 
-            await fetch(updateUrl, {
+            const resUpdate = await fetch(updateUrl, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(updateBody),
               cache: "no-store"
             });
+
+            if (!resUpdate.ok) {
+              const errBody = await resUpdate.text();
+              throw new Error(`Firestore update failed: ${resUpdate.statusText} - ${errBody}`);
+            }
 
             sentCount++;
           } catch (err) {
