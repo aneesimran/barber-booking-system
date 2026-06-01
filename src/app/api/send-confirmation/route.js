@@ -117,30 +117,6 @@ export async function POST(request) {
                 padding: 20px;
                 margin-bottom: 25px;
               }
-              .detail-row {
-                display: flex;
-                justify-content: space-between;
-                padding: 10px 0;
-                border-bottom: 1px solid #1a1a1a;
-              }
-              .detail-row:last-child {
-                border-bottom: none;
-                padding-bottom: 0;
-              }
-              .detail-row:first-child {
-                padding-top: 0;
-              }
-              .detail-label {
-                color: #8a8a8a;
-                font-size: 12px;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-              }
-              .detail-value {
-                color: #ffffff;
-                font-size: 14px;
-                font-weight: 600;
-              }
               .policy-note {
                 font-size: 12px;
                 color: #8a8a8a;
@@ -174,22 +150,24 @@ export async function POST(request) {
                 <div class="intro">Your appointment has been successfully scheduled! We look forward to seeing you. Below are your booking details:</div>
                 
                 <div class="details-card">
-                  <div class="detail-row">
-                    <span class="detail-label">Barber</span>
-                    <span class="detail-value">${barberName}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Date</span>
-                    <span class="detail-value">${formattedDate}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Time</span>
-                    <span class="detail-value">${timeFormatted}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Duration</span>
-                    <span class="detail-value">20 Minutes</span>
-                  </div>
+                  <table style="width: 100%; border-collapse: collapse; border-spacing: 0;">
+                    <tr style="border-bottom: 1px solid #222222;">
+                      <td style="padding: 12px 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Barber</td>
+                      <td style="padding: 12px 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">${barberName}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #222222;">
+                      <td style="padding: 12px 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Date</td>
+                      <td style="padding: 12px 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">${formattedDate}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #222222;">
+                      <td style="padding: 12px 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Time</td>
+                      <td style="padding: 12px 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">${timeFormatted}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 12px 0 0 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Duration</td>
+                      <td style="padding: 12px 0 0 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">20 Minutes</td>
+                    </tr>
+                  </table>
                 </div>
                 
                 <div class="policy-note">
