@@ -64,6 +64,30 @@ export default function DashboardPage() {
         status: "cancelled",
         updatedAt: new Date().toISOString()
       });
+
+      // Send cancellation notification (SMS & Email) asynchronously
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (token) {
+          fetch("/api/admin/send-cancellation", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              customerName: selectedAppointment.customer.name,
+              customerPhone: selectedAppointment.customer.phone,
+              customerEmail: selectedAppointment.customer.email,
+              barberId: selectedAppointment.barberId,
+              date: selectedAppointment.date,
+              time: selectedAppointment.time
+            }),
+          });
+        }
+      } catch (smsErr) {
+        console.error("Failed to send cancellation notification:", smsErr);
+      }
       
       setAppointments(prev => prev.map(a => a.id === selectedAppointment.id ? { ...a, status: "cancelled" } : a));
       setModalSuccess("Appointment cancelled successfully!");
