@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+const rawAdmins = process.env.NEXT_PUBLIC_ADMIN_EMAILS || "";
+// Strip any inline comments (e.g. #...) and split by comma
+const ADMIN_EMAILS = rawAdmins.split("#")[0].split(",").map(e => e.trim().toLowerCase());
 
 export default function AuthGuard({ children }) {
   const router = useRouter();
