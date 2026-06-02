@@ -12,14 +12,19 @@ export default function AuthGuard({ children }) {
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
+    console.log("AuthGuard: ADMIN_EMAILS =", ADMIN_EMAILS);
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("AuthGuard: onAuthStateChanged user =", user ? user.email : "null");
       if (!user) {
+        console.log("AuthGuard: No user, redirecting to /admin");
         router.push("/admin");
       } else if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+        console.log("AuthGuard: User not in whitelist, signing out and redirecting");
         // Log out unauthorized users immediately
         auth.signOut();
         router.push("/admin?error=unauthorized");
       } else {
+        console.log("AuthGuard: Authorized successfully!");
         setAuthorized(true);
       }
       setLoading(false);

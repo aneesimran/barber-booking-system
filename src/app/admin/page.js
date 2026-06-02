@@ -30,12 +30,14 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    console.log("LoginForm: Attempting login for", email);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log("LoginForm: Login succeeded, user =", userCredential.user.email);
       router.push("/admin/dashboard");
     } catch (err) {
-      console.error("Login error details:", err);
+      console.error("LoginForm: Login failed:", err);
       let errMsg = "Invalid email or password.";
       if (err.code) {
         errMsg += ` (${err.code})`;
