@@ -69,6 +69,24 @@ export default function ReportsPage() {
     }
   };
 
+  // Next Navigation disabling logic
+  const isNextDisabled = () => {
+    const todayStr = formatLocalDate(new Date());
+    if (viewMode === "day") {
+      return selectedDate >= todayStr;
+    } else if (viewMode === "week") {
+      const { sunday } = getWeekRange(selectedDate);
+      const nextMonday = new Date(sunday);
+      nextMonday.setDate(sunday.getDate() + 1);
+      const nextMondayStr = formatLocalDate(nextMonday);
+      return nextMondayStr > todayStr;
+    } else {
+      const { yearLabel } = getYearRange(selectedDate);
+      const currentYear = new Date().getFullYear();
+      return Number(yearLabel) >= currentYear;
+    }
+  };
+
   // Date Navigation Shifting
   const handlePrevRange = () => {
     setSelectedDate((prev) => {
@@ -86,6 +104,7 @@ export default function ReportsPage() {
   };
 
   const handleNextRange = () => {
+    if (isNextDisabled()) return;
     setSelectedDate((prev) => {
       const [y, m, d] = prev.split("-").map(Number);
       const date = new Date(y, m - 1, d);
@@ -213,7 +232,7 @@ export default function ReportsPage() {
   }, [viewMode, selectedDate]);
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="p-4 sm:p-8 space-y-8 animate-fade-in">
       {/* Header and View Mode Toggle */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -241,21 +260,36 @@ export default function ReportsPage() {
 
       {/* Date Navigation Bar */}
       <div className="bg-[#111] border border-[#222] p-4 rounded-xl flex items-center justify-between shadow-lg">
-        <button
-          onClick={handlePrevRange}
-          className="bg-[#1a1a1a] hover:bg-[#222] text-[var(--text-muted)] hover:text-white p-2.5 rounded-lg border border-[#333] transition-all active:scale-95 flex items-center justify-center"
-          title={`Previous ${viewMode}`}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handlePrevRange}
+            className="bg-[#1a1a1a] hover:bg-[#222] text-[var(--text-muted)] hover:text-white p-2.5 rounded-lg border border-[#333] transition-all active:scale-95 flex items-center justify-center"
+            title={`Previous ${viewMode}`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
 
-        <span className="text-white font-medium text-sm md:text-base text-center">
+          <button
+            onClick={() => setSelectedDate(formatLocalDate(new Date()))}
+            className="px-3.5 py-2 text-xs font-semibold uppercase tracking-wider bg-[#1a1a1a] hover:bg-[#222] text-[var(--gold)] border border-[#333] rounded-lg transition-all active:scale-95"
+            title="Go to Today"
+          >
+            Today
+          </button>
+        </div>
+
+        <span className="text-white font-medium text-sm md:text-base text-center px-2">
           {getRangeLabel()}
         </span>
 
         <button
           onClick={handleNextRange}
-          className="bg-[#1a1a1a] hover:bg-[#222] text-[var(--text-muted)] hover:text-white p-2.5 rounded-lg border border-[#333] transition-all active:scale-95 flex items-center justify-center"
+          disabled={isNextDisabled()}
+          className={`p-2.5 rounded-lg border transition-all flex items-center justify-center ${
+            isNextDisabled()
+              ? "bg-[#111] text-[#333] border-[#222] opacity-40 cursor-not-allowed"
+              : "bg-[#1a1a1a] hover:bg-[#222] text-[var(--text-muted)] hover:text-white border-[#333] active:scale-95"
+          }`}
           title={`Next ${viewMode}`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
