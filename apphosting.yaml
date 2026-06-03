@@ -28,7 +28,7 @@ env:
 
   # Whitelisted Admins
   - variable: NEXT_PUBLIC_ADMIN_EMAILS
-    value: "aneeshairdresser@gmail.com,aneesimran@outlook.com"
+    value: "aneeshairdresser@gmail.com,aneesimran@outlook.com,ali_raza89@hotmail.co.uk"
 
   # Resend Sender Details
   - variable: RESEND_SENDER_EMAIL
