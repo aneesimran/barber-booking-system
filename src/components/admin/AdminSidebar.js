@@ -11,6 +11,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
     { href: "/admin/dashboard", label: "Dashboard" },
     { href: "/admin/schedule", label: "Schedule" },
     { href: "/admin/blocked", label: "Blocked Slots" },
+    { href: "/admin/reports", label: "Reports" },
   ];
 
   const handleSignOut = async () => {
