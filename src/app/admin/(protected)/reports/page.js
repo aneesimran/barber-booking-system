@@ -38,15 +38,33 @@ export default function ReportsPage() {
   // Formatting date range label for UI
   const getRangeLabel = () => {
     const options = { day: "numeric", month: "short", year: "numeric" };
+    const todayStr = formatLocalDate(new Date());
+
     if (viewMode === "day") {
       const [y, m, d] = selectedDate.split("-").map(Number);
       const date = new Date(y, m - 1, d);
-      return date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      const formatted = date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      return selectedDate === todayStr ? `${formatted} (Today)` : formatted;
     } else if (viewMode === "week") {
       const { monday, sunday } = getWeekRange(selectedDate);
+      const mondayStr = formatLocalDate(monday);
+      const sundayStr = formatLocalDate(sunday);
+
+      if (todayStr >= mondayStr && todayStr <= sundayStr) {
+        const [ty, tm, td] = todayStr.split("-").map(Number);
+        const todayObj = new Date(ty, tm - 1, td);
+        return `${monday.toLocaleDateString("en-GB", options)} – ${todayObj.toLocaleDateString("en-GB", options)}`;
+      }
       return `${monday.toLocaleDateString("en-GB", options)} – ${sunday.toLocaleDateString("en-GB", options)}`;
     } else {
-      const { yearLabel } = getYearRange(selectedDate);
+      const { start, end, yearLabel } = getYearRange(selectedDate);
+      if (todayStr >= start && todayStr <= end) {
+        const [ty, tm, td] = todayStr.split("-").map(Number);
+        const todayObj = new Date(ty, tm - 1, td);
+        const [sy, sm, sd] = start.split("-").map(Number);
+        const startObj = new Date(sy, sm - 1, sd);
+        return `${startObj.toLocaleDateString("en-GB", options)} – ${todayObj.toLocaleDateString("en-GB", options)}`;
+      }
       return `Calendar Year ${yearLabel}`;
     }
   };
@@ -89,17 +107,28 @@ export default function ReportsPage() {
 
       try {
         let startDate, endDate;
+        const todayStr = formatLocalDate(new Date());
+
         if (viewMode === "day") {
           startDate = selectedDate;
           endDate = selectedDate;
         } else if (viewMode === "week") {
           const { monday, sunday } = getWeekRange(selectedDate);
           startDate = formatLocalDate(monday);
-          endDate = formatLocalDate(sunday);
+          const sundayStr = formatLocalDate(sunday);
+          if (todayStr >= startDate && todayStr <= sundayStr) {
+            endDate = todayStr;
+          } else {
+            endDate = sundayStr;
+          }
         } else {
           const { start, end } = getYearRange(selectedDate);
           startDate = start;
-          endDate = end;
+          if (todayStr >= start && todayStr <= end) {
+            endDate = todayStr;
+          } else {
+            endDate = end;
+          }
         }
 
         // 1. Fetch appointments within date range
