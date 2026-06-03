@@ -7,7 +7,7 @@ import { barbers } from "@/config/barbers";
 import { formatLocalDate } from "@/lib/appointments";
 
 export default function ReportsPage() {
-  const [viewMode, setViewMode] = useState("week"); // "day" | "week" | "2weeks" | "year"
+  const [viewMode, setViewMode] = useState("week"); // "day" | "week" | "year"
   const [selectedDate, setSelectedDate] = useState(() => formatLocalDate(new Date()));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,15 +23,6 @@ export default function ReportsPage() {
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
     return { monday, sunday };
-  };
-
-  // Fixed 2-Week Range: Monday of Week 1 to Sunday of Week 2 (14 Days)
-  const get2WeekRange = (dateStr) => {
-    const { monday } = getWeekRange(dateStr);
-    const startMonday = new Date(monday);
-    const endSunday = new Date(startMonday);
-    endSunday.setDate(startMonday.getDate() + 13);
-    return { startMonday, endSunday };
   };
 
   // Fixed Year Range: Jan 1 to Dec 31
@@ -65,17 +56,6 @@ export default function ReportsPage() {
         return `${monday.toLocaleDateString("en-GB", options)} – ${todayObj.toLocaleDateString("en-GB", options)}`;
       }
       return `${monday.toLocaleDateString("en-GB", options)} – ${sunday.toLocaleDateString("en-GB", options)}`;
-    } else if (viewMode === "2weeks") {
-      const { startMonday, endSunday } = get2WeekRange(selectedDate);
-      const startStr = formatLocalDate(startMonday);
-      const endStr = formatLocalDate(endSunday);
-
-      if (todayStr >= startStr && todayStr <= endStr) {
-        const [ty, tm, td] = todayStr.split("-").map(Number);
-        const todayObj = new Date(ty, tm - 1, td);
-        return `${startMonday.toLocaleDateString("en-GB", options)} – ${todayObj.toLocaleDateString("en-GB", options)}`;
-      }
-      return `${startMonday.toLocaleDateString("en-GB", options)} – ${endSunday.toLocaleDateString("en-GB", options)}`;
     } else {
       const { start, end, yearLabel } = getYearRange(selectedDate);
       if (todayStr >= start && todayStr <= end) {
@@ -100,12 +80,6 @@ export default function ReportsPage() {
       nextMonday.setDate(sunday.getDate() + 1);
       const nextMondayStr = formatLocalDate(nextMonday);
       return nextMondayStr > todayStr;
-    } else if (viewMode === "2weeks") {
-      const { endSunday } = get2WeekRange(selectedDate);
-      const nextMonday = new Date(endSunday);
-      nextMonday.setDate(endSunday.getDate() + 1);
-      const nextMondayStr = formatLocalDate(nextMonday);
-      return nextMondayStr > todayStr;
     } else {
       const { yearLabel } = getYearRange(selectedDate);
       const currentYear = new Date().getFullYear();
@@ -122,8 +96,6 @@ export default function ReportsPage() {
         date.setDate(date.getDate() - 1);
       } else if (viewMode === "week") {
         date.setDate(date.getDate() - 7);
-      } else if (viewMode === "2weeks") {
-        date.setDate(date.getDate() - 14);
       } else {
         date.setFullYear(date.getFullYear() - 1);
       }
@@ -140,8 +112,6 @@ export default function ReportsPage() {
         date.setDate(date.getDate() + 1);
       } else if (viewMode === "week") {
         date.setDate(date.getDate() + 7);
-      } else if (viewMode === "2weeks") {
-        date.setDate(date.getDate() + 14);
       } else {
         date.setFullYear(date.getFullYear() + 1);
       }
@@ -169,15 +139,6 @@ export default function ReportsPage() {
             endDate = todayStr;
           } else {
             endDate = sundayStr;
-          }
-        } else if (viewMode === "2weeks") {
-          const { startMonday, endSunday } = get2WeekRange(selectedDate);
-          startDate = formatLocalDate(startMonday);
-          const endSundayStr = formatLocalDate(endSunday);
-          if (todayStr >= startDate && todayStr <= endSundayStr) {
-            endDate = todayStr;
-          } else {
-            endDate = endSundayStr;
           }
         } else {
           const { start, end } = getYearRange(selectedDate);
@@ -280,8 +241,8 @@ export default function ReportsPage() {
         </div>
 
         {/* View Mode Toggle Buttons */}
-        <div className="flex bg-[#111] p-1 rounded-lg border border-[#222] flex-wrap">
-          {["day", "week", "2weeks", "year"].map((mode) => (
+        <div className="flex bg-[#111] p-1 rounded-lg border border-[#222]">
+          {["day", "week", "year"].map((mode) => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
@@ -291,7 +252,7 @@ export default function ReportsPage() {
                   : "text-[var(--text-muted)] hover:text-white"
               }`}
             >
-              {mode === "2weeks" ? "2 weeks" : mode}
+              {mode}
             </button>
           ))}
         </div>
