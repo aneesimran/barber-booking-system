@@ -53,7 +53,7 @@ service cloud.firestore {
 
     // Check if user is an admin
     function isAdmin() {
-      return request.auth != null && request.auth.token.email in ['aneeshairdresser@gmail.com', 'aneesimran@outlook.com'];
+      return request.auth != null && request.auth.token.email in ['aneeshairdresser@gmail.com', 'aneesimran@outlook.com', 'ali_raza89@hotmail.co.uk'];
     }
 
     // ===============================================================
