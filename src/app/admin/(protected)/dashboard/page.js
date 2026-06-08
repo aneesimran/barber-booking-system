@@ -53,6 +53,22 @@ export default function DashboardPage() {
     });
   };
 
+  const getSelectedDayName = () => {
+    if (!selectedDate) return "";
+    const [y, m, d] = selectedDate.split("-").map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const today = new Date();
+    const isToday = today.getFullYear() === y && today.getMonth() === (m - 1) && today.getDate() === d;
+    
+    const formatted = dateObj.toLocaleDateString("en-GB", { 
+      weekday: "long", 
+      day: "numeric", 
+      month: "long", 
+      year: "numeric" 
+    });
+    return isToday ? `${formatted} (Today)` : formatted;
+  };
+
   const handleCancelBooking = async () => {
     if (!selectedAppointment) return;
     setActionLoading(true);
@@ -221,18 +237,28 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row justify-between sm:items-center items-start mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>Dashboard</h1>
-          <p className="text-[var(--text-muted)]">View and manage bookings.</p>
+          <p className="text-[var(--text-muted)]">
+            Schedule for <span className="text-[var(--gold)] font-semibold">{getSelectedDayName()}</span>
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button 
             onClick={handlePrevDay}
-            className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white p-2 rounded-lg transition-colors active:scale-95"
+            className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white p-2 rounded-lg transition-colors active:scale-95 flex items-center justify-center"
             title="Previous Day"
             aria-label="Previous day"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           
+          <button
+            onClick={() => setSelectedDate(formatLocalDate(new Date()))}
+            className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-[#111] hover:bg-[#222] text-[var(--gold)] border border-[#333] rounded-lg transition-all active:scale-95"
+            title="Go to Today"
+          >
+            Today
+          </button>
+
           <input 
             type="date"
             value={selectedDate}
@@ -242,7 +268,7 @@ export default function DashboardPage() {
 
           <button 
             onClick={handleNextDay}
-            className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white p-2 rounded-lg transition-colors active:scale-95"
+            className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white p-2 rounded-lg transition-colors active:scale-95 flex items-center justify-center"
             title="Next Day"
             aria-label="Next day"
           >
