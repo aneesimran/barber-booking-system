@@ -130,10 +130,11 @@ export async function GET(request) {
         if (customerPhone) {
           const barber = barbers.find(b => b.id === barberId);
           const barberName = barber ? barber.name : barberId;
+          const contactPhone = barberId === "ali" ? "07538270142" : "07930383297";
 
           // Format readable time (e.g. 10:00 AM)
           const timeFormatted = `${h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-          const message = `Hi ${customerName || "there"},\n\nThis is a reminder for your appointment with ${barberName} today at ${timeFormatted} at Anees Hairdressers.\n\nIf you need to reach us, please call 07930383297.\n\nSee you soon!`;
+          const message = `Hi ${customerName || "there"},\n\nThis is a reminder for your appointment with ${barberName} today at ${timeFormatted} at Anees Hairdressers.\n\nIf you need to reach us, please call ${contactPhone}.\n\nSee you soon!`;
 
           try {
             // Send SMS

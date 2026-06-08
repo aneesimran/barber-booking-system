@@ -91,6 +91,7 @@ export async function POST(request) {
 
     const barber = barbers.find((b) => b.id === barberId);
     const barberName = barber ? barber.name : barberId;
+    const contactPhone = barberId === "ali" ? "07538270142" : "07930383297";
 
     // Format Date (e.g. Monday, 1 June 2026)
     const [y, m, d] = date.split("-").map(Number);
@@ -106,7 +107,7 @@ export async function POST(request) {
     const [h, min] = time.split(":").map(Number);
     const timeFormatted = `${h > 12 ? h - 12 : h}:${String(min).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
 
-    const smsText = `Hi ${customerName},\n\nYour appointment with ${barberName} on ${formattedDate} at ${timeFormatted} at Anees Hairdressers has been cancelled.\n\nIf you need to reach us, please call 07930383297.\n\nThank you!`;
+    const smsText = `Hi ${customerName},\n\nYour appointment with ${barberName} on ${formattedDate} at ${timeFormatted} at Anees Hairdressers has been cancelled.\n\nIf you need to reach us, please call ${contactPhone}.\n\nThank you!`;
 
     let smsSent = false;
     let emailSent = false;
@@ -249,7 +250,7 @@ export async function POST(request) {
                     </div>
                     
                     <div class="policy-note">
-                      If you did not request this cancellation or have any questions, please call us directly on <strong>07930383297</strong>.
+                      If you did not request this cancellation or have any questions, please call us directly on <strong>${contactPhone}</strong>.
                     </div>
                   </div>
                   <div class="footer">
