@@ -244,7 +244,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2">
           <button 
             onClick={handlePrevDay}
-            className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white p-2 rounded-lg transition-colors active:scale-95 flex items-center justify-center"
+            className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white h-[38px] w-[38px] rounded-lg transition-colors active:scale-95 flex items-center justify-center shrink-0"
             title="Previous Day"
             aria-label="Previous day"
           >
@@ -253,7 +253,7 @@ export default function DashboardPage() {
           
           <button
             onClick={() => setSelectedDate(formatLocalDate(new Date()))}
-            className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-[#111] hover:bg-[#222] text-[var(--gold)] border border-[#333] rounded-lg transition-all active:scale-95"
+            className="px-4 h-[38px] text-xs font-semibold uppercase tracking-wider bg-[#111] hover:bg-[#222] text-[var(--gold)] border border-[#333] rounded-lg transition-all active:scale-95 flex items-center justify-center shrink-0"
             title="Go to Today"
           >
             Today
@@ -263,12 +263,12 @@ export default function DashboardPage() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="bg-[#111] border border-[#333] text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[var(--gold)] text-center font-medium"
+            className="bg-[#111] border border-[#333] text-white px-4 h-[38px] rounded-lg focus:outline-none focus:border-[var(--gold)] text-center font-medium shrink-0"
           />
 
           <button 
             onClick={handleNextDay}
-            className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white p-2 rounded-lg transition-colors active:scale-95 flex items-center justify-center"
+            className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white h-[38px] w-[38px] rounded-lg transition-colors active:scale-95 flex items-center justify-center shrink-0"
             title="Next Day"
             aria-label="Next day"
           >
