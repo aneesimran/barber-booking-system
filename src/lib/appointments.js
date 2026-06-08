@@ -41,7 +41,7 @@ async function getBarberScheduleRest(barberId) {
     }
     const data = await res.json();
     const fields = data.fields || {};
-    const schedule = {};
+    const schedule = { barberId };
     
     if (fields.workingHours && fields.workingHours.mapValue) {
       schedule.workingHours = {};
@@ -366,15 +366,17 @@ export function generateTimeSlots(schedule, date) {
 
   let lunchStartMins = -1;
   let lunchEndMins = -1;
-  if (schedule.lunchBreak) {
+  // Friday closure: 12:20 PM (740 mins) to 2:00 PM (840 mins)
+  const isFriday = date.getDay() === 5;
+  const isAliFriday = isFriday && schedule.barberId === "ali";
+
+  if (schedule.lunchBreak && !isAliFriday) {
     const [lStartH, lStartM] = schedule.lunchBreak.start.split(":").map(Number);
     const [lEndH, lEndM] = schedule.lunchBreak.end.split(":").map(Number);
     lunchStartMins = lStartH * 60 + lStartM;
     lunchEndMins = lEndH * 60 + lEndM;
   }
 
-  // Friday closure: 12:20 PM (740 mins) to 2:00 PM (840 mins)
-  const isFriday = date.getDay() === 5;
   const friCloseStart = 12 * 60 + 20;
   const friCloseEnd = 14 * 60;
 
@@ -447,7 +449,7 @@ export async function getBarberSchedule(barberId) {
       const scheduleRef = doc(db, "barberSchedules", barberId);
       const snap = await getDoc(scheduleRef);
       if (snap.exists()) {
-        return snap.data();
+        return { barberId, ...snap.data() };
       }
     } catch (err) {
       console.error("Error fetching schedule, using fallback", err);
@@ -458,6 +460,7 @@ export async function getBarberSchedule(barberId) {
   const barber = barbers.find((b) => b.id === barberId);
   if (!barber) return null;
   return {
+    barberId,
     workingHours: barber.workingHours,
     lunchBreak: barber.lunchBreak
   };
@@ -492,6 +495,7 @@ export async function getBarberScheduleForDate(barberId, dateString) {
 
   if (dateOverride) {
     return {
+      barberId,
       workingHours: {
         [dayKey]: dateOverride.workingHours ? {
           start: dateOverride.workingHours.start,
