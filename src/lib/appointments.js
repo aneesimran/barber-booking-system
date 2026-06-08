@@ -373,7 +373,18 @@ export function generateTimeSlots(schedule, date) {
     lunchEndMins = lEndH * 60 + lEndM;
   }
 
+  // Friday closure: 12:20 PM (740 mins) to 2:00 PM (840 mins)
+  const isFriday = date.getDay() === 5;
+  const friCloseStart = 12 * 60 + 20;
+  const friCloseEnd = 14 * 60;
+
   for (let m = startMinutes; m + duration <= endMinutes; m += duration) {
+    // Skip slots that overlap with Friday shop closure
+    if (isFriday) {
+      if (m >= friCloseStart && m < friCloseEnd) continue;
+      if (m + duration > friCloseStart && m + duration <= friCloseEnd) continue;
+    }
+
     // Skip slots that overlap with lunch break
     if (lunchStartMins > -1 && lunchEndMins > -1) {
       if (m >= lunchStartMins && m < lunchEndMins) continue;
