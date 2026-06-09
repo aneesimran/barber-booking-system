@@ -37,6 +37,22 @@ export default function BlockedSlotsPage() {
     });
   };
 
+  const getSelectedDayName = () => {
+    if (!selectedDate) return "";
+    const [y, m, d] = selectedDate.split("-").map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const today = new Date();
+    const isToday = today.getFullYear() === y && today.getMonth() === (m - 1) && today.getDate() === d;
+    
+    const formatted = dateObj.toLocaleDateString("en-GB", { 
+      weekday: "long", 
+      day: "numeric", 
+      month: "long", 
+      year: "numeric" 
+    });
+    return isToday ? `${formatted} (Today)` : formatted;
+  };
+
   useEffect(() => {
     const fetchSlots = async () => {
       setLoading(true);
@@ -162,13 +178,15 @@ export default function BlockedSlotsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>Blocked Slots</h1>
-          <p className="text-[var(--text-muted)]">Manually block specific times so customers can't book them.</p>
+          <p className="text-[var(--text-muted)]">
+            Schedule for <span className="text-[var(--gold)] font-semibold">{getSelectedDayName()}</span>
+          </p>
         </div>
         <div className="flex gap-4 items-center flex-wrap sm:flex-nowrap">
           <select 
             value={selectedBarberId}
             onChange={(e) => setSelectedBarberId(e.target.value)}
-            className="bg-[#111] border border-[#333] text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[var(--gold)]"
+            className="bg-[#111] border border-[#333] text-white px-4 h-[38px] rounded-lg focus:outline-none focus:border-[var(--gold)] shrink-0 font-medium"
           >
             {barbers.map(b => (
               <option key={b.id} value={b.id}>{b.name}</option>
@@ -178,23 +196,31 @@ export default function BlockedSlotsPage() {
           <div className="flex items-center gap-2">
             <button 
               onClick={handlePrevDay}
-              className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white p-2 rounded-lg transition-colors active:scale-95 flex items-center justify-center shrink-0"
+              className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white h-[38px] w-[38px] rounded-lg transition-colors active:scale-95 flex items-center justify-center shrink-0"
               title="Previous Day"
               aria-label="Previous day"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
             
+            <button
+              onClick={() => setSelectedDate(formatLocalDate(new Date()))}
+              className="px-4 h-[38px] text-xs font-semibold uppercase tracking-wider bg-[#111] hover:bg-[#222] text-[var(--gold)] border border-[#333] rounded-lg transition-all active:scale-95 flex items-center justify-center shrink-0"
+              title="Go to Today"
+            >
+              Today
+            </button>
+
             <input 
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-[#111] border border-[#333] text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[var(--gold)] text-center font-medium"
+              className="bg-[#111] border border-[#333] text-white px-4 h-[38px] rounded-lg focus:outline-none focus:border-[var(--gold)] text-center font-medium shrink-0"
             />
 
             <button 
               onClick={handleNextDay}
-              className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white p-2 rounded-lg transition-colors active:scale-95 flex items-center justify-center shrink-0"
+              className="bg-[#111] hover:bg-[#222] border border-[#333] text-[var(--text-muted)] hover:text-white h-[38px] w-[38px] rounded-lg transition-colors active:scale-95 flex items-center justify-center shrink-0"
               title="Next Day"
               aria-label="Next day"
             >
