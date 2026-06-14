@@ -332,30 +332,51 @@ export default function DashboardPage() {
                         );
                       }
 
+                      let cardClasses = "border-[#222] bg-[#0a0a0a] hover:border-[var(--gold)]/50 hover:bg-white/[0.02]";
+                      let timeTextClasses = "text-[var(--gold)]";
+                      let timeDividerClasses = "border-[#222]";
+                      let badgeClasses = "bg-gray-500/10 text-gray-400";
+                      let customerNameClasses = "text-white";
+
+                      if (item.status === "confirmed") {
+                        cardClasses = "border-green-500/20 bg-green-500/[0.03] hover:border-green-500/40 hover:bg-green-500/[0.06]";
+                        timeTextClasses = "text-green-400";
+                        timeDividerClasses = "border-green-500/10";
+                        badgeClasses = "bg-green-500/15 text-green-400 border border-green-500/20";
+                        customerNameClasses = "text-white font-semibold";
+                      } else if (item.status === "cancelled") {
+                        cardClasses = "border-zinc-800/50 bg-[#0c0c0c] opacity-50 hover:opacity-80";
+                        timeTextClasses = "text-zinc-500";
+                        timeDividerClasses = "border-zinc-800/30";
+                        badgeClasses = "bg-zinc-800/10 text-zinc-500 border border-zinc-800/20";
+                        customerNameClasses = "text-zinc-500";
+                      } else if (item.status === "no-show") {
+                        cardClasses = "border-amber-500/10 bg-amber-500/[0.01] opacity-75 hover:opacity-100 hover:border-amber-500/30";
+                        timeTextClasses = "text-amber-400";
+                        timeDividerClasses = "border-amber-500/10";
+                        badgeClasses = "bg-amber-500/15 text-amber-400 border border-amber-500/20";
+                        customerNameClasses = "text-zinc-300";
+                      }
+
                       return (
                         <div 
                           key={item.id} 
                           onClick={() => setSelectedAppointment(item)}
-                          className="flex gap-4 p-3 rounded-lg border border-[#222] bg-[#0a0a0a] hover:border-[var(--gold)]/50 cursor-pointer hover:bg-white/[0.02] transition-all"
+                          className={`flex gap-4 p-3 rounded-lg border cursor-pointer transition-all ${cardClasses}`}
                         >
-                          <div className="text-center min-w-[60px] shrink-0 border-r border-[#222] pr-4">
-                            <p className="text-lg font-bold text-[var(--gold)]">{item.time}</p>
+                          <div className={`text-center min-w-[60px] shrink-0 border-r pr-4 ${timeDividerClasses}`}>
+                            <p className={`text-lg font-bold ${timeTextClasses}`}>{item.time}</p>
                             <p className="text-[10px] uppercase text-[var(--text-muted)]">20 Min</p>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-white truncate">{item.customer.name}</p>
+                            <p className={`font-medium truncate ${customerNameClasses}`}>{item.customer.name}</p>
                             <div className="text-xs text-[var(--text-muted)] mt-1 space-y-0.5">
                               <p className="truncate">{item.customer.phone}</p>
                               <p className="truncate" title={item.customer.email}>{item.customer.email}</p>
                             </div>
                           </div>
                           <div className="shrink-0 flex items-start">
-                            <span className={`text-[10px] px-2 py-1 rounded uppercase tracking-wider ${
-                              item.status === "confirmed" ? "bg-green-500/10 text-green-400" : 
-                              item.status === "cancelled" ? "bg-red-500/10 text-red-400" :
-                              item.status === "no-show" ? "bg-amber-500/10 text-amber-400" :
-                              "bg-gray-500/10 text-gray-400"
-                            }`}>
+                            <span className={`text-[10px] px-2 py-1 rounded uppercase tracking-wider ${badgeClasses}`}>
                               {item.status}
                             </span>
                           </div>
