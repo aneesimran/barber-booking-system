@@ -311,20 +311,20 @@ export default function DashboardPage() {
                           <div 
                             key={item.id} 
                             onClick={() => setSelectedBlockedSlot(item)}
-                            className="flex gap-4 p-3 rounded-lg border border-red-500/10 bg-red-500/5 hover:border-red-500/30 cursor-pointer hover:bg-red-500/[0.08] transition-all"
+                            className="flex gap-4 p-3 rounded-lg border border-red-700 bg-red-900 hover:border-red-600 hover:bg-red-800 cursor-pointer transition-all shadow-md"
                           >
-                            <div className="text-center min-w-[60px] shrink-0 border-r border-red-500/10 pr-4">
-                              <p className="text-lg font-bold text-red-400">{item.time}</p>
-                              <p className="text-[10px] uppercase text-red-400/60">Blocked</p>
+                            <div className="text-center min-w-[60px] shrink-0 border-r border-red-800 pr-4">
+                              <p className="text-lg font-bold text-white">{item.time}</p>
+                              <p className="text-[10px] uppercase text-red-200 font-semibold">Blocked</p>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-white truncate">Blocked Time Slot</p>
-                              <div className="text-xs text-[var(--text-muted)] mt-1 space-y-0.5">
+                              <p className="font-bold text-white truncate">Blocked Time Slot</p>
+                              <div className="text-xs text-red-100 mt-1 space-y-0.5">
                                 <p className="truncate italic">Reason: {item.reason}</p>
                               </div>
                             </div>
                             <div className="shrink-0 flex items-start">
-                              <span className="text-[10px] px-2 py-1 rounded uppercase tracking-wider bg-red-500/10 text-red-400">
+                              <span className="text-[10px] px-2 py-1 rounded uppercase tracking-wider bg-red-950 text-red-200 border border-red-800 font-semibold">
                                 Blocked
                               </span>
                             </div>
@@ -332,30 +332,34 @@ export default function DashboardPage() {
                         );
                       }
 
-                      let cardClasses = "border-[#222] bg-[#0a0a0a] hover:border-[var(--gold)]/50 hover:bg-white/[0.02]";
-                      let timeTextClasses = "text-[var(--gold)]";
-                      let timeDividerClasses = "border-[#222]";
-                      let badgeClasses = "bg-gray-500/10 text-gray-400";
-                      let customerNameClasses = "text-white";
+                      let cardClasses = "border-zinc-800 bg-zinc-900 hover:border-[var(--gold)]/50 hover:bg-zinc-800 transition-all";
+                      let timeTextClasses = "text-[var(--gold)] font-bold";
+                      let timeDividerClasses = "border-zinc-800";
+                      let badgeClasses = "bg-zinc-950 text-zinc-300 border border-zinc-800 font-semibold";
+                      let customerNameClasses = "text-white font-bold";
+                      let detailsTextClasses = "text-zinc-400";
 
                       if (item.status === "confirmed") {
-                        cardClasses = "border-green-500/20 bg-green-500/[0.03] hover:border-green-500/40 hover:bg-green-500/[0.06]";
-                        timeTextClasses = "text-green-400";
-                        timeDividerClasses = "border-green-500/10";
-                        badgeClasses = "bg-green-500/15 text-green-400 border border-green-500/20";
-                        customerNameClasses = "text-white font-semibold";
+                        cardClasses = "border-emerald-700 bg-emerald-900 hover:border-emerald-600 hover:bg-emerald-800 shadow-md";
+                        timeTextClasses = "text-white font-bold";
+                        timeDividerClasses = "border-emerald-800";
+                        badgeClasses = "bg-emerald-950 text-emerald-200 border border-emerald-800 font-semibold";
+                        customerNameClasses = "text-white font-bold";
+                        detailsTextClasses = "text-emerald-100";
                       } else if (item.status === "cancelled") {
-                        cardClasses = "border-zinc-800/50 bg-[#0c0c0c] opacity-50 hover:opacity-80";
-                        timeTextClasses = "text-zinc-500";
-                        timeDividerClasses = "border-zinc-800/30";
-                        badgeClasses = "bg-zinc-800/10 text-zinc-500 border border-zinc-800/20";
-                        customerNameClasses = "text-zinc-500";
+                        cardClasses = "border-zinc-800 bg-zinc-900 opacity-60 hover:opacity-85 shadow-md";
+                        timeTextClasses = "text-zinc-400 font-medium";
+                        timeDividerClasses = "border-zinc-800";
+                        badgeClasses = "bg-zinc-950 text-zinc-500 border border-zinc-800 font-semibold";
+                        customerNameClasses = "text-zinc-400 font-medium line-through";
+                        detailsTextClasses = "text-zinc-500";
                       } else if (item.status === "no-show") {
-                        cardClasses = "border-amber-500/10 bg-amber-500/[0.01] opacity-75 hover:opacity-100 hover:border-amber-500/30";
-                        timeTextClasses = "text-amber-400";
-                        timeDividerClasses = "border-amber-500/10";
-                        badgeClasses = "bg-amber-500/15 text-amber-400 border border-amber-500/20";
-                        customerNameClasses = "text-zinc-300";
+                        cardClasses = "border-amber-700 bg-amber-900 hover:border-amber-600 hover:bg-amber-800 shadow-md";
+                        timeTextClasses = "text-white font-bold";
+                        timeDividerClasses = "border-amber-800";
+                        badgeClasses = "bg-amber-950 text-amber-200 border border-amber-800 font-semibold";
+                        customerNameClasses = "text-white font-bold";
+                        detailsTextClasses = "text-amber-100";
                       }
 
                       return (
@@ -366,11 +370,11 @@ export default function DashboardPage() {
                         >
                           <div className={`text-center min-w-[60px] shrink-0 border-r pr-4 ${timeDividerClasses}`}>
                             <p className={`text-lg font-bold ${timeTextClasses}`}>{item.time}</p>
-                            <p className="text-[10px] uppercase text-[var(--text-muted)]">20 Min</p>
+                            <p className={`text-[10px] uppercase font-semibold ${detailsTextClasses}`}>20 Min</p>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={`font-medium truncate ${customerNameClasses}`}>{item.customer.name}</p>
-                            <div className="text-xs text-[var(--text-muted)] mt-1 space-y-0.5">
+                            <div className={`text-xs mt-1 space-y-0.5 ${detailsTextClasses}`}>
                               <p className="truncate">{item.customer.phone}</p>
                               <p className="truncate" title={item.customer.email}>{item.customer.email}</p>
                             </div>
