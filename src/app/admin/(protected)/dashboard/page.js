@@ -311,20 +311,20 @@ export default function DashboardPage() {
                           <div 
                             key={item.id} 
                             onClick={() => setSelectedBlockedSlot(item)}
-                            className="flex gap-4 p-3 rounded-lg border border-red-700 bg-red-900 hover:border-red-600 hover:bg-red-800 cursor-pointer transition-all shadow-md"
+                            className="flex gap-4 p-3 rounded-lg border border-[#2a1515] bg-[#140c0c] hover:border-[#3a1f1f] hover:bg-[#1a1010] cursor-pointer transition-all"
                           >
-                            <div className="text-center min-w-[60px] shrink-0 border-r border-red-800 pr-4">
-                              <p className="text-lg font-bold text-white">{item.time}</p>
-                              <p className="text-[10px] uppercase text-red-200 font-semibold">Blocked</p>
+                            <div className="text-center min-w-[60px] shrink-0 border-r border-[#2a1515] pr-4">
+                              <p className="text-lg font-bold text-red-400">{item.time}</p>
+                              <p className="text-[10px] uppercase text-red-400/70 font-semibold">Blocked</p>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-bold text-white truncate">Blocked Time Slot</p>
-                              <div className="text-xs text-red-100 mt-1 space-y-0.5">
+                              <p className="font-semibold text-white truncate">Blocked Time Slot</p>
+                              <div className="text-xs text-[#b5b5b5] mt-1 space-y-0.5">
                                 <p className="truncate italic">Reason: {item.reason}</p>
                               </div>
                             </div>
                             <div className="shrink-0 flex items-start">
-                              <span className="text-[10px] px-2 py-1 rounded uppercase tracking-wider bg-red-950 text-red-200 border border-red-800 font-semibold">
+                              <span className="text-[10px] px-2 py-1 rounded uppercase tracking-wider bg-[#1c0e0e] text-red-400 border border-[#2a1515] font-semibold">
                                 Blocked
                               </span>
                             </div>
@@ -332,34 +332,34 @@ export default function DashboardPage() {
                         );
                       }
 
-                      let cardClasses = "border-zinc-800 bg-zinc-900 hover:border-[var(--gold)]/50 hover:bg-zinc-800 transition-all";
+                      let cardClasses = "border-[#222] bg-[#0a0a0a] hover:border-[var(--gold)]/50 hover:bg-[#111] transition-all";
                       let timeTextClasses = "text-[var(--gold)] font-bold";
-                      let timeDividerClasses = "border-zinc-800";
-                      let badgeClasses = "bg-zinc-950 text-zinc-300 border border-zinc-800 font-semibold";
-                      let customerNameClasses = "text-white font-bold";
-                      let detailsTextClasses = "text-zinc-400";
+                      let timeDividerClasses = "border-[#222]";
+                      let badgeClasses = "bg-[#111] text-[#999] border border-[#222] font-semibold";
+                      let customerNameClasses = "text-white font-semibold";
+                      let detailsTextClasses = "text-[#b5b5b5]";
 
                       if (item.status === "confirmed") {
-                        cardClasses = "border-emerald-700 bg-emerald-900 hover:border-emerald-600 hover:bg-emerald-800 shadow-md";
-                        timeTextClasses = "text-white font-bold";
-                        timeDividerClasses = "border-emerald-800";
-                        badgeClasses = "bg-emerald-950 text-emerald-200 border border-emerald-800 font-semibold";
-                        customerNameClasses = "text-white font-bold";
-                        detailsTextClasses = "text-emerald-100";
+                        cardClasses = "border-[#1a2e1f] bg-[#0c1510] hover:border-[#254a2e] hover:bg-[#101c14]";
+                        timeTextClasses = "text-green-400 font-bold";
+                        timeDividerClasses = "border-[#1a2e1f]";
+                        badgeClasses = "bg-[#0e1a12] text-green-400 border border-[#1a2e1f] font-semibold";
+                        customerNameClasses = "text-white font-semibold";
+                        detailsTextClasses = "text-[#b5b5b5]";
                       } else if (item.status === "cancelled") {
-                        cardClasses = "border-zinc-800 bg-zinc-900 opacity-60 hover:opacity-85 shadow-md";
-                        timeTextClasses = "text-zinc-400 font-medium";
-                        timeDividerClasses = "border-zinc-800";
-                        badgeClasses = "bg-zinc-950 text-zinc-500 border border-zinc-800 font-semibold";
-                        customerNameClasses = "text-zinc-400 font-medium line-through";
-                        detailsTextClasses = "text-zinc-500";
+                        cardClasses = "border-[#222] bg-[#0c0c0c] opacity-50 hover:opacity-75";
+                        timeTextClasses = "text-zinc-500 font-medium";
+                        timeDividerClasses = "border-[#1a1a1a]";
+                        badgeClasses = "bg-[#111] text-zinc-500 border border-[#222] font-semibold";
+                        customerNameClasses = "text-zinc-500 font-medium line-through";
+                        detailsTextClasses = "text-zinc-600";
                       } else if (item.status === "no-show") {
-                        cardClasses = "border-amber-700 bg-amber-900 hover:border-amber-600 hover:bg-amber-800 shadow-md";
-                        timeTextClasses = "text-white font-bold";
-                        timeDividerClasses = "border-amber-800";
-                        badgeClasses = "bg-amber-950 text-amber-200 border border-amber-800 font-semibold";
-                        customerNameClasses = "text-white font-bold";
-                        detailsTextClasses = "text-amber-100";
+                        cardClasses = "border-[#2a2215] bg-[#15120a] hover:border-[#3a301f] hover:bg-[#1a1610]";
+                        timeTextClasses = "text-amber-400 font-bold";
+                        timeDividerClasses = "border-[#2a2215]";
+                        badgeClasses = "bg-[#12100a] text-amber-400 border border-[#2a2215] font-semibold";
+                        customerNameClasses = "text-white font-semibold";
+                        detailsTextClasses = "text-[#b5b5b5]";
                       }
 
                       return (
