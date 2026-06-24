@@ -311,20 +311,20 @@ export default function DashboardPage() {
                           <div 
                             key={item.id} 
                             onClick={() => setSelectedBlockedSlot(item)}
-                            className="flex gap-4 p-3 rounded-lg border border-[#2a1515] bg-[#140c0c] hover:border-[#3a1f1f] hover:bg-[#1a1010] cursor-pointer transition-all"
+                            className="flex gap-4 p-3 rounded-lg border border-[#4a2424] bg-[#2d1616] hover:border-[#5c2e2e] hover:bg-[#351c1c] cursor-pointer transition-all"
                           >
-                            <div className="text-center min-w-[60px] shrink-0 border-r border-[#2a1515] pr-4">
-                              <p className="text-lg font-bold text-red-400">{item.time}</p>
-                              <p className="text-[10px] uppercase text-red-400/70 font-semibold">Blocked</p>
+                            <div className="text-center min-w-[60px] shrink-0 border-r border-[#4a2424] pr-4">
+                              <p className="text-lg font-bold text-white">{item.time}</p>
+                              <p className="text-[10px] uppercase text-red-300 font-semibold">Blocked</p>
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-white truncate">Blocked Time Slot</p>
-                              <div className="text-xs text-[#b5b5b5] mt-1 space-y-0.5">
+                              <div className="text-xs text-red-200/80 mt-1 space-y-0.5">
                                 <p className="truncate italic">Reason: {item.reason}</p>
                               </div>
                             </div>
                             <div className="shrink-0 flex items-start">
-                              <span className="text-[10px] px-2 py-1 rounded uppercase tracking-wider bg-[#1c0e0e] text-red-400 border border-[#2a1515] font-semibold">
+                              <span className="text-[10px] px-2 py-1 rounded uppercase tracking-wider bg-[#3a1c1c] text-red-300 border border-[#4a2424] font-semibold">
                                 Blocked
                               </span>
                             </div>
@@ -337,29 +337,29 @@ export default function DashboardPage() {
                       let timeDividerClasses = "border-[#222]";
                       let badgeClasses = "bg-[#111] text-[#999] border border-[#222] font-semibold";
                       let customerNameClasses = "text-white font-semibold";
-                      let detailsTextClasses = "text-[#b5b5b5]";
+                      let detailsTextClasses = "text-[#ccc]";
 
                       if (item.status === "confirmed") {
-                        cardClasses = "border-[#1a2e1f] bg-[#0c1510] hover:border-[#254a2e] hover:bg-[#101c14]";
-                        timeTextClasses = "text-green-400 font-bold";
-                        timeDividerClasses = "border-[#1a2e1f]";
-                        badgeClasses = "bg-[#0e1a12] text-green-400 border border-[#1a2e1f] font-semibold";
+                        cardClasses = "border-[#256b42] bg-[#163021] hover:border-[#2e8050] hover:bg-[#1c3a28]";
+                        timeTextClasses = "text-green-300 font-bold";
+                        timeDividerClasses = "border-[#256b42]";
+                        badgeClasses = "bg-[#1c3a28] text-green-300 border border-[#256b42] font-semibold";
                         customerNameClasses = "text-white font-semibold";
-                        detailsTextClasses = "text-[#b5b5b5]";
+                        detailsTextClasses = "text-green-100/80";
                       } else if (item.status === "cancelled") {
-                        cardClasses = "border-[#222] bg-[#0c0c0c] opacity-50 hover:opacity-75";
-                        timeTextClasses = "text-zinc-500 font-medium";
-                        timeDividerClasses = "border-[#1a1a1a]";
-                        badgeClasses = "bg-[#111] text-zinc-500 border border-[#222] font-semibold";
-                        customerNameClasses = "text-zinc-500 font-medium line-through";
-                        detailsTextClasses = "text-zinc-600";
+                        cardClasses = "border-[#333] bg-[#1a1a1a] opacity-55 hover:opacity-80";
+                        timeTextClasses = "text-zinc-400 font-medium";
+                        timeDividerClasses = "border-[#2a2a2a]";
+                        badgeClasses = "bg-[#222] text-zinc-400 border border-[#333] font-semibold";
+                        customerNameClasses = "text-zinc-400 font-medium line-through";
+                        detailsTextClasses = "text-zinc-500";
                       } else if (item.status === "no-show") {
-                        cardClasses = "border-[#2a2215] bg-[#15120a] hover:border-[#3a301f] hover:bg-[#1a1610]";
-                        timeTextClasses = "text-amber-400 font-bold";
-                        timeDividerClasses = "border-[#2a2215]";
-                        badgeClasses = "bg-[#12100a] text-amber-400 border border-[#2a2215] font-semibold";
+                        cardClasses = "border-[#4a3824] bg-[#302816] hover:border-[#5c4830] hover:bg-[#38301c]";
+                        timeTextClasses = "text-amber-300 font-bold";
+                        timeDividerClasses = "border-[#4a3824]";
+                        badgeClasses = "bg-[#38301c] text-amber-300 border border-[#4a3824] font-semibold";
                         customerNameClasses = "text-white font-semibold";
-                        detailsTextClasses = "text-[#b5b5b5]";
+                        detailsTextClasses = "text-amber-100/80";
                       }
 
                       return (
