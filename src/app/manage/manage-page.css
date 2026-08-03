@@ -1,0 +1,620 @@
+/* =====================================================
+   Manage Appointment Page Styles
+   Follows the existing dark/gold design system
+   ===================================================== */
+
+/* Page container */
+.manage-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.manage-container {
+  width: 100%;
+  max-width: 32rem;
+  padding-top: 1rem;
+}
+
+/* Header */
+.manage-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.manage-header-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: rgba(201, 168, 76, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.manage-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.35rem;
+}
+
+.manage-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Status badges */
+.manage-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.manage-status-badge.confirmed {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.manage-status-badge.cancelled {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.manage-status-badge.completed {
+  background: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.manage-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Details card */
+.manage-details-card {
+  animation: fadeInUp 0.7s ease-out forwards;
+  opacity: 0;
+  animation-delay: 100ms;
+}
+
+.manage-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 0;
+}
+
+.manage-detail-row:not(:last-child) {
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.manage-detail-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.manage-detail-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Action buttons */
+.manage-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+  animation-delay: 200ms;
+}
+
+.manage-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+}
+
+.manage-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.manage-btn-reschedule {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #0a0a0a;
+}
+
+.manage-btn-reschedule:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px rgba(201, 168, 76, 0.25);
+}
+
+.manage-btn-cancel {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.manage-btn-cancel:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.35);
+  transform: scale(1.02);
+}
+
+/* Warning banner */
+.manage-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.875rem 1rem;
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  border-radius: 0.75rem;
+  margin-top: 1rem;
+  animation: fadeInUp 0.85s ease-out forwards;
+  opacity: 0;
+  animation-delay: 250ms;
+}
+
+.manage-warning p {
+  font-size: 0.75rem;
+  color: #fbbf24;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Cancel confirmation modal */
+.manage-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.manage-modal {
+  width: 100%;
+  max-width: 24rem;
+  background: #131313;
+  border: 1px solid var(--card-border);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(201, 168, 76, 0.06);
+  animation: fadeInUp 0.3s ease-out;
+  text-align: center;
+}
+
+.manage-modal-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.manage-modal h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.5rem;
+}
+
+.manage-modal p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+
+.manage-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.manage-modal-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.manage-modal-btn.secondary {
+  background: var(--card-bg);
+  color: white;
+  border: 1px solid var(--glass-border);
+}
+
+.manage-modal-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.manage-modal-btn.danger {
+  background: rgba(239, 68, 68, 0.85);
+  color: white;
+}
+
+.manage-modal-btn.danger:hover {
+  background: rgba(239, 68, 68, 1);
+}
+
+.manage-modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Reschedule flow */
+.manage-reschedule-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.manage-reschedule-back {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.manage-reschedule-back:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.manage-reschedule-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.manage-reschedule-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+}
+
+/* Date grid for reschedule */
+.manage-date-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.manage-date-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.25rem;
+  border-radius: 0.6rem;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 3.5rem;
+}
+
+.manage-date-cell:hover:not(:disabled):not(.selected) {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--glass-border);
+}
+
+.manage-date-cell.selected {
+  background: rgba(201, 168, 76, 0.12);
+  border-color: var(--gold);
+}
+
+.manage-date-cell:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.manage-date-day {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.manage-date-num {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+}
+
+.manage-date-cell.selected .manage-date-num {
+  color: var(--gold);
+}
+
+/* Time slot grid for reschedule */
+.manage-time-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.manage-time-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dark) transparent;
+}
+
+.manage-time-slot {
+  padding: 0.6rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.manage-time-slot:hover:not(:disabled):not(.selected) {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(201, 168, 76, 0.3);
+}
+
+.manage-time-slot.selected {
+  background: rgba(201, 168, 76, 0.12);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.manage-time-slot:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+/* Confirm reschedule button */
+.manage-confirm-btn {
+  width: 100%;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #0a0a0a;
+}
+
+.manage-confirm-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px rgba(201, 168, 76, 0.25);
+}
+
+.manage-confirm-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Success state */
+.manage-success {
+  text-align: center;
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.manage-success-icon {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.manage-success-icon.cancelled {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.manage-success-icon.rescheduled {
+  background: rgba(201, 168, 76, 0.12);
+}
+
+.manage-success h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.5rem;
+}
+
+.manage-success p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+
+/* Loading state */
+.manage-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 0.75rem;
+}
+
+.manage-loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid rgba(201, 168, 76, 0.2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.manage-loading p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Error state */
+.manage-error {
+  text-align: center;
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.manage-error-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.manage-error h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.5rem;
+}
+
+.manage-error p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+
+/* Week navigation */
+.manage-week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.manage-week-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+}
+
+.manage-week-btn {
+  background: none;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.4rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.manage-week-btn:hover:not(:disabled) {
+  color: white;
+  border-color: var(--card-border-hover);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.manage-week-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .manage-title {
+    font-size: 1.35rem;
+  }
+
+  .manage-time-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .manage-actions {
+    flex-direction: column;
+  }
+}

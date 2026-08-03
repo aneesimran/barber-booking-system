@@ -30,6 +30,10 @@ env:
   - variable: NEXT_PUBLIC_ADMIN_EMAILS
     value: "aneeshairdresser@gmail.com,aneesimran@outlook.com,ali_raza89@hotmail.co.uk"
 
+  # App URL (used for email manage links)
+  - variable: NEXT_PUBLIC_APP_URL
+    value: "https://aneeshairdressers.co.uk"
+
   # Resend Sender Details
   - variable: RESEND_SENDER_EMAIL
     value: "booking@aneeshairdressers.co.uk"

@@ -79,7 +79,7 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
         stripeCustomerId: customerId || null,
       });
 
-      const appointmentId = await createAppointment({
+      const { appointmentId, managementToken } = await createAppointment({
         barberId,
         customerId: firestoreCustomerId,
         date,
@@ -97,6 +97,8 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
           barberId,
           date,
           time,
+          appointmentId,
+          managementToken,
         }),
       }).catch((err) => console.error("Email trigger failed:", err));
 
@@ -146,7 +148,7 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
         stripeCustomerId: customerId || null,
       });
 
-      const appointmentId = await createAppointment({
+      const { appointmentId, managementToken } = await createAppointment({
         barberId,
         customerId: firestoreCustomerId,
         date,
@@ -164,6 +166,8 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
           barberId,
           date,
           time,
+          appointmentId,
+          managementToken,
         }),
       }).catch((err) => console.error("Email trigger failed:", err));
 

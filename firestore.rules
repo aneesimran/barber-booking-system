@@ -66,7 +66,7 @@ service cloud.firestore {
                             'duration', 'status', 'reminderSent', 'createdAt'];
       let allAllowedFields = ['barberId', 'customerId', 'date', 'time',
                               'duration', 'status', 'reminderSent',
-                              'stripeSetupIntentId', 'createdAt'];
+                              'stripeSetupIntentId', 'managementToken', 'createdAt'];
       let validBarberIds = ['imran', 'ali'];
 
       return
@@ -112,6 +112,14 @@ service cloud.firestore {
           (data.stripeSetupIntentId is string &&
            data.stripeSetupIntentId.size() >= 1 &&
            data.stripeSetupIntentId.size() <= 200)
+        ) &&
+
+        // managementToken: optional — must be string if present, 20-50 chars
+        (
+          !("managementToken" in data) ||
+          (data.managementToken is string &&
+           data.managementToken.size() >= 20 &&
+           data.managementToken.size() <= 50)
         ) &&
 
         // createdAt: must be the server timestamp (prevents manipulation)
@@ -173,8 +181,33 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isValidAppointmentCreate(request.resource.data);
       allow update: if isAdmin() || (
+        // Allow marking reminder as sent
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reminderSent', 'updatedAt']) &&
         request.resource.data.reminderSent == true
+      ) || (
+        // Allow customer cancellation with management token verification
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancelledAt', 'managementToken']) &&
+        resource.data.status == 'confirmed' &&
+        request.resource.data.status == 'cancelled' &&
+        request.resource.data.cancelledAt is timestamp &&
+        // Verify management token matches (defense-in-depth)
+        resource.data.managementToken is string &&
+        request.resource.data.managementToken == resource.data.managementToken
+      ) || (
+        // Allow customer reschedule with management token verification
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['date', 'time', 'previousDate', 'previousTime', 'rescheduledAt', 'managementToken']) &&
+        resource.data.status == 'confirmed' &&
+        request.resource.data.status == 'confirmed' &&
+        request.resource.data.date is string &&
+        request.resource.data.date.size() == 10 &&
+        request.resource.data.date.matches("^\\d{4}-\\d{2}-\\d{2}$") &&
+        request.resource.data.time is string &&
+        request.resource.data.time.size() == 5 &&
+        request.resource.data.time.matches("^\\d{2}:\\d{2}$") &&
+        request.resource.data.rescheduledAt is timestamp &&
+        // Verify management token matches (defense-in-depth)
+        resource.data.managementToken is string &&
+        request.resource.data.managementToken == resource.data.managementToken
       );
       allow delete: if false;
     }

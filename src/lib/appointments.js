@@ -10,6 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { randomUUID } from "crypto";
 import { barbers, dayKeys, shopInfo } from "@/config/barbers";
 
 /**
@@ -314,6 +315,7 @@ async function createOrFindCustomerRest(data) {
 async function createAppointmentRest(data) {
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const createUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/appointments`;
+  const managementToken = randomUUID();
   
   const appointmentDoc = {
     fields: {
@@ -324,6 +326,7 @@ async function createAppointmentRest(data) {
       duration: { integerValue: 20 },
       status: { stringValue: "confirmed" },
       reminderSent: { booleanValue: false },
+      managementToken: { stringValue: managementToken },
       stripeSetupIntentId: data.stripeSetupIntentId ? { stringValue: data.stripeSetupIntentId } : { nullValue: null },
       createdAt: { timestampValue: new Date().toISOString() }
     }
@@ -341,7 +344,113 @@ async function createAppointmentRest(data) {
   }
   
   const createdData = await createRes.json();
-  return createdData.name.split("/").pop();
+  const appointmentId = createdData.name.split("/").pop();
+  return { appointmentId, managementToken };
+}
+
+/**
+ * Fetch a single appointment document by ID via Firestore REST API.
+ * @param {string} appointmentId
+ * @returns {Promise<Object|null>} Parsed appointment data with id, or null if not found
+ */
+export async function getAppointmentByIdRest(appointmentId) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/appointments/${appointmentId}`;
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      throw new Error(`REST appointment fetch failed: ${res.statusText}`);
+    }
+    const data = await res.json();
+    const fields = data.fields || {};
+    return {
+      id: appointmentId,
+      barberId: fields.barberId?.stringValue || null,
+      customerId: fields.customerId?.stringValue || null,
+      date: fields.date?.stringValue || null,
+      time: fields.time?.stringValue || null,
+      duration: parseInt(fields.duration?.integerValue || "20", 10),
+      status: fields.status?.stringValue || null,
+      managementToken: fields.managementToken?.stringValue || null,
+      stripeSetupIntentId: fields.stripeSetupIntentId?.stringValue || null,
+      reminderSent: fields.reminderSent?.booleanValue || false,
+      createdAt: fields.createdAt?.timestampValue || null,
+      cancelledAt: fields.cancelledAt?.timestampValue || null,
+      rescheduledAt: fields.rescheduledAt?.timestampValue || null,
+      previousDate: fields.previousDate?.stringValue || null,
+      previousTime: fields.previousTime?.stringValue || null,
+    };
+  } catch (err) {
+    console.error("Error in getAppointmentByIdRest:", err);
+    return null;
+  }
+}
+
+/**
+ * Update an appointment document via Firestore REST API.
+ * @param {string} appointmentId
+ * @param {Object} updates - Key/value pairs to update
+ * @returns {Promise<boolean>} True if successful
+ */
+export async function updateAppointmentRest(appointmentId, updates) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const fieldPaths = Object.keys(updates).map(k => `updateMask.fieldPaths=${k}`).join("&");
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/appointments/${appointmentId}?${fieldPaths}`;
+  
+  const fields = {};
+  for (const [key, value] of Object.entries(updates)) {
+    if (typeof value === "string") {
+      fields[key] = { stringValue: value };
+    } else if (typeof value === "boolean") {
+      fields[key] = { booleanValue: value };
+    } else if (value instanceof Date) {
+      fields[key] = { timestampValue: value.toISOString() };
+    } else if (typeof value === "number") {
+      fields[key] = { integerValue: String(value) };
+    }
+  }
+  
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fields }),
+    cache: "no-store"
+  });
+  
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(`REST appointment update failed: ${res.statusText} ${JSON.stringify(errData)}`);
+  }
+  return true;
+}
+
+/**
+ * Fetch a customer document by ID via Firestore REST API.
+ * @param {string} customerId
+ * @returns {Promise<Object|null>}
+ */
+export async function getCustomerByIdRest(customerId) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/customers/${customerId}`;
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      throw new Error(`REST customer fetch failed: ${res.statusText}`);
+    }
+    const data = await res.json();
+    const fields = data.fields || {};
+    return {
+      id: customerId,
+      name: fields.name?.stringValue || null,
+      email: fields.email?.stringValue || null,
+      phone: fields.phone?.stringValue || null,
+    };
+  } catch (err) {
+    console.error("Error in getCustomerByIdRest:", err);
+    return null;
+  }
 }
 
 /**
@@ -586,6 +695,7 @@ export async function createAppointment(data) {
     return createAppointmentRest(data);
   }
 
+  const managementToken = crypto.randomUUID();
   const docRef = await addDoc(collection(db, "appointments"), {
     barberId: data.barberId,
     customerId: data.customerId,
@@ -594,10 +704,11 @@ export async function createAppointment(data) {
     duration: shopInfo.appointmentDuration,
     status: "confirmed",
     reminderSent: false,
+    managementToken,
     stripeSetupIntentId: data.stripeSetupIntentId || null,
     createdAt: serverTimestamp(),
   });
-  return docRef.id;
+  return { appointmentId: docRef.id, managementToken };
 }
 
 /**

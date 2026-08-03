@@ -7,7 +7,7 @@ import { barbers } from "@/config/barbers";
  */
 export async function POST(request) {
   try {
-    const { email, name, barberId, date, time } = await request.json();
+    const { email, name, barberId, date, time, appointmentId, managementToken } = await request.json();
 
     if (!email || !name || !barberId || !date || !time) {
       return Response.json(
@@ -42,6 +42,21 @@ export async function POST(request) {
 
     // Sender email (use verified domain email or fallback)
     const senderEmail = process.env.RESEND_SENDER_EMAIL || "booking@resend.dev";
+
+    // Build manage appointment URL (only if appointmentId and token are provided)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://aneeshairdressers.co.uk";
+    const manageUrl = appointmentId && managementToken
+      ? `${appUrl}/manage/${appointmentId}?token=${managementToken}`
+      : null;
+
+    // Manage appointment button HTML (only shown if manage URL is available)
+    const manageButtonHtml = manageUrl ? `
+                <div style="text-align: center; margin-top: 25px; margin-bottom: 5px;">
+                  <p style="font-size: 13px; color: #b5b5b5; margin-bottom: 15px;">Need to make changes to your appointment?</p>
+                  <a href="${manageUrl}" style="display: inline-block; background: linear-gradient(135deg, #c9a84c, #a68a3a); color: #0a0a0a; font-weight: 600; font-size: 14px; padding: 12px 28px; border-radius: 8px; text-decoration: none; letter-spacing: 0.02em;">Manage Appointment</a>
+                  <p style="font-size: 11px; color: #6a6a6a; margin-top: 12px;">Reschedule or cancel up to 1 hour before your appointment</p>
+                </div>
+    ` : "";
 
     // Send email using Resend REST API
     const res = await fetch("https://api.resend.com/emails", {
@@ -170,8 +185,10 @@ export async function POST(request) {
                   </table>
                 </div>
                 
+                ${manageButtonHtml}
+
                 <div class="policy-note">
-                  <strong>Cancellation Policy:</strong> Please notify us at least 24 hours in advance if you need to reschedule or cancel your appointment. In the event of a no-show, a £5.00 fee may be charged to your card.
+                  <strong>Cancellation Policy:</strong> You can reschedule or cancel your appointment up to 1 hour before your scheduled time using the link above. In the event of a no-show, a £5.00 fee may be charged to your card.
                 </div>
               </div>
               <div class="footer">
