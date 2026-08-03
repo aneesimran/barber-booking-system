@@ -43,8 +43,16 @@ export async function POST(request) {
     // Sender email (use verified domain email or fallback)
     const senderEmail = process.env.RESEND_SENDER_EMAIL || "booking@resend.dev";
 
-    // Build manage appointment URL (only if appointmentId and token are provided)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://aneeshairdressers.co.uk";
+    // Build manage appointment URL
+    const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+    const proto = request.headers.get("x-forwarded-proto") || "https";
+    const requestUrl = host ? `${proto}://${host}` : null;
+
+    const defaultAppUrl = "https://barber-booking-system--barber-booking-d6dd5.europe-west4.hosted.app";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("aneeshairdressers.co.uk")
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : requestUrl || defaultAppUrl;
+
     const manageUrl = appointmentId && managementToken
       ? `${appUrl}/manage/${appointmentId}?token=${managementToken}`
       : null;

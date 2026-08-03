@@ -32,7 +32,7 @@ env:
 
   # App URL (used for email manage links)
   - variable: NEXT_PUBLIC_APP_URL
-    value: "https://aneeshairdressers.co.uk"
+    value: "https://barber-booking-system--barber-booking-d6dd5.europe-west4.hosted.app"
 
   # Resend Sender Details
   - variable: RESEND_SENDER_EMAIL

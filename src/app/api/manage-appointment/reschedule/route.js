@@ -166,7 +166,14 @@ export async function POST(request) {
 
     // Send new confirmation email asynchronously
     if (customerEmail) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://aneeshairdressers.co.uk";
+      const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+      const proto = request.headers.get("x-forwarded-proto") || "https";
+      const requestUrl = host ? `${proto}://${host}` : null;
+      const defaultAppUrl = "https://barber-booking-system--barber-booking-d6dd5.europe-west4.hosted.app";
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("aneeshairdressers.co.uk")
+        ? process.env.NEXT_PUBLIC_APP_URL
+        : requestUrl || defaultAppUrl;
+
       const senderEmail = process.env.RESEND_SENDER_EMAIL || "booking@resend.dev";
       const resendApiKey = process.env.RESEND_API_KEY;
 
