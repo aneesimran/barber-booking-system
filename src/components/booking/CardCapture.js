@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { getStripe } from "@/lib/stripe";
-import { getBookedSlots, createOrFindCustomer, createAppointment } from "@/lib/appointments";
+import { getBookedSlots, getBlockedSlots, createOrFindCustomer, createAppointment } from "@/lib/appointments";
 
 import TermsModal from "./TermsModal";
 
@@ -67,9 +67,15 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
     try {
       const { barberId, date, time } = bookingData;
       
-      const bookedSlots = await getBookedSlots(barberId, date);
+      const [bookedSlots, blockedSlots] = await Promise.all([
+        getBookedSlots(barberId, date),
+        getBlockedSlots(barberId, date),
+      ]);
       if (bookedSlots.includes(time)) {
         throw new Error("This time slot has just been booked. Please start over.");
+      }
+      if (blockedSlots.includes(time)) {
+        throw new Error("This time slot is no longer available. Please start over.");
       }
 
       const firestoreCustomerId = await createOrFindCustomer({
@@ -136,9 +142,15 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
 
       const { barberId, date, time } = bookingData;
       
-      const bookedSlots = await getBookedSlots(barberId, date);
+      const [bookedSlots, blockedSlots] = await Promise.all([
+        getBookedSlots(barberId, date),
+        getBlockedSlots(barberId, date),
+      ]);
       if (bookedSlots.includes(time)) {
         throw new Error("This time slot has just been booked. Please start over.");
+      }
+      if (blockedSlots.includes(time)) {
+        throw new Error("This time slot is no longer available. Please start over.");
       }
 
       const firestoreCustomerId = await createOrFindCustomer({

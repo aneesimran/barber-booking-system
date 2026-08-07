@@ -2,6 +2,7 @@ import {
   createAppointment,
   createOrFindCustomer,
   getBookedSlots,
+  getBlockedSlots,
 } from "@/lib/appointments";
 
 /**
@@ -41,13 +42,23 @@ export async function POST(request) {
       );
     }
 
-    // Check the slot is still available (prevent double-booking)
-    console.log("Checking booked slots...");
-    const bookedSlots = await getBookedSlots(barberId, date);
+    // Check the slot is still available (prevent double-booking AND blocked slots)
+    console.log("Checking booked and blocked slots...");
+    const [bookedSlots, blockedSlots] = await Promise.all([
+      getBookedSlots(barberId, date),
+      getBlockedSlots(barberId, date),
+    ]);
     console.log("Booked slots:", bookedSlots);
+    console.log("Blocked slots:", blockedSlots);
     if (bookedSlots.includes(time)) {
       return Response.json(
         { error: "This time slot has just been booked. Please select another." },
+        { status: 409 }
+      );
+    }
+    if (blockedSlots.includes(time)) {
+      return Response.json(
+        { error: "This time slot is no longer available. Please select another." },
         { status: 409 }
       );
     }
