@@ -209,10 +209,16 @@ export default function ReportsPage() {
           }
         });
 
-        // Aggregate blocked slots
+        // Aggregate blocked slots (deduplicated by barberId, date, time)
+        const countedBlockedSlots = new Set();
         blockedSnap.forEach((doc) => {
           const data = doc.data();
           const bId = data.barberId;
+          if (!bId || !data.date || !data.time) return;
+          const slotKey = `${bId}_${data.date}_${data.time}`;
+          if (countedBlockedSlots.has(slotKey)) return;
+          countedBlockedSlots.add(slotKey);
+
           if (stats[bId]) {
             stats[bId].blocked++;
             stats["total"].blocked++;

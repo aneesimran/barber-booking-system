@@ -231,7 +231,7 @@ async function getBlockedSlotsRest(barberId, dateString) {
       if (item.document) {
         const fields = item.document.fields || {};
         const time = fields.time?.stringValue;
-        if (time) blockedSlots.push(time);
+        if (time && !blockedSlots.includes(time)) blockedSlots.push(time);
       }
     }
     return blockedSlots;
@@ -700,7 +700,7 @@ export async function getBlockedSlots(barberId, dateString, { throwOnError = fal
       where("date", "==", dateString)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => doc.data().time);
+    return Array.from(new Set(snapshot.docs.map(doc => doc.data().time).filter(Boolean)));
   } catch (err) {
     console.error("Error fetching blocked slots:", err);
     if (throwOnError) throw err;

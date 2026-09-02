@@ -24,12 +24,21 @@ export default function DashboardPage() {
     if (!selectedBlockedSlot) return;
     setUnblockingLoading(true);
     try {
+      // Find and delete ALL blocked documents for this barber, date, and time
+      const q = query(
+        collection(db, "blockedSlots"),
+        where("barberId", "==", selectedBlockedSlot.barberId),
+        where("date", "==", selectedBlockedSlot.date),
+        where("time", "==", selectedBlockedSlot.time)
+      );
+      const snap = await getDocs(q);
+      await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+
+      // Also ensure deterministic ID is deleted directly
       const deterministicId = `${selectedBlockedSlot.barberId}_${selectedBlockedSlot.date}_${selectedBlockedSlot.time}`;
-      await deleteDoc(doc(db, "blockedSlots", selectedBlockedSlot.id));
-      if (selectedBlockedSlot.id !== deterministicId) {
-        await deleteDoc(doc(db, "blockedSlots", deterministicId)).catch(() => {});
-      }
-      setAppointments(prev => prev.filter(item => item.id !== selectedBlockedSlot.id && item.id !== deterministicId));
+      await deleteDoc(doc(db, "blockedSlots", deterministicId)).catch(() => {});
+
+      setAppointments(prev => prev.filter(item => !(item.isBlockedSlot && item.barberId === selectedBlockedSlot.barberId && item.time === selectedBlockedSlot.time)));
       setSelectedBlockedSlot(null);
     } catch (err) {
       console.error(err);
@@ -222,23 +231,50 @@ export default function DashboardPage() {
       if (isMounted) setLoading(false);
     });
 
-    // 2. Real-time blocked slots listener
+    // 2. Real-time blocked slots listener (with slot-level deduplication)
     const blockedQ = query(
       collection(db, "blockedSlots"),
       where("date", "==", selectedDate)
     );
     const unsubBlocked = onSnapshot(blockedQ, (snap) => {
-      latestBlocked = snap.docs.map(doc => {
-        const b = doc.data();
-        return {
-          id: doc.id,
-          barberId: b.barberId,
-          date: b.date,
-          time: b.time,
-          reason: b.reason || "Manual Block",
-          isBlockedSlot: true
-        };
+      const blockedBySlot = new Map();
+      const legacyDocsToDelete = [];
+
+      snap.docs.forEach(docSnap => {
+        const b = docSnap.data();
+        if (!b.barberId || !b.time) return;
+        const detId = `${b.barberId}_${b.date}_${b.time}`;
+        const slotKey = `${b.barberId}_${b.time}`;
+
+        // Prefer deterministic doc ID, or keep first encountered
+        if (!blockedBySlot.has(slotKey) || docSnap.id === detId) {
+          blockedBySlot.set(slotKey, {
+            id: docSnap.id,
+            barberId: b.barberId,
+            date: b.date,
+            time: b.time,
+            reason: b.reason || "Manual Block",
+            isBlockedSlot: true
+          });
+        }
+
+        // Track legacy random-ID docs to clean them up from Firestore
+        if (docSnap.id !== detId) {
+          legacyDocsToDelete.push({ id: docSnap.id, detId });
+        }
       });
+
+      // Auto-cleanup legacy duplicate documents from Firestore in background
+      if (auth.currentUser && legacyDocsToDelete.length > 0) {
+        legacyDocsToDelete.forEach(item => {
+          const hasDeterministic = snap.docs.some(other => other.id === item.detId);
+          if (hasDeterministic) {
+            deleteDoc(doc(db, "blockedSlots", item.id)).catch(() => {});
+          }
+        });
+      }
+
+      latestBlocked = Array.from(blockedBySlot.values());
       combineAndSet();
     }, (err) => {
       console.error("Dashboard blocked snapshot error:", err);

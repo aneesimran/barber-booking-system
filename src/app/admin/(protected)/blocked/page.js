@@ -75,9 +75,16 @@ export default function BlockedSlotsPage() {
 
         const updateSlotGrid = () => {
           if (!isMounted) return;
+          const blockedByTime = new Map();
+          latestBlockedDocs.forEach(b => {
+            if (!blockedByTime.has(b.time) || b.id === getBlockedSlotId(selectedBarberId, selectedDate, b.time)) {
+              blockedByTime.set(b.time, b);
+            }
+          });
+
           const slotsData = allTimes.map(time => {
             const isBooked = latestBookedTimes.includes(time);
-            const blockedDoc = latestBlockedDocs.find(b => b.time === time);
+            const blockedDoc = blockedByTime.get(time);
             return {
               time,
               isBooked,
@@ -121,7 +128,7 @@ export default function BlockedSlotsPage() {
         unsubscribeBlocked = onSnapshot(blockedQ, (snap) => {
           latestBlockedDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-          // Auto-migrate any legacy random-ID blocks for today/future to deterministic IDs
+          // Auto-migrate any legacy random-ID blocks for today/future to deterministic IDs and remove duplicates
           const todayStr = formatLocalDate(new Date());
           if (selectedDate >= todayStr && auth.currentUser) {
             snap.docs.forEach(d => {
@@ -136,6 +143,9 @@ export default function BlockedSlotsPage() {
                     reason: data.reason || "Manual Block",
                     createdAt: data.createdAt || serverTimestamp(),
                     createdBy: data.createdBy || auth.currentUser?.uid || "unknown"
+                  }).then(() => {
+                    // Delete old random-ID document now that deterministic one is saved
+                    deleteDoc(doc(db, "blockedSlots", d.id)).catch(() => {});
                   }).catch(e => console.warn("Auto-migration notice:", e));
                 }
               }
@@ -244,7 +254,6 @@ export default function BlockedSlotsPage() {
     
     const slotTime = selectedSlotForModal.time;
     const deterministicId = getBlockedSlotId(selectedBarberId, selectedDate, slotTime);
-    const blockedId = selectedSlotForModal.blockedId || deterministicId;
     
     // Set loading in UI list
     setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: true } : s));
@@ -254,12 +263,16 @@ export default function BlockedSlotsPage() {
     setModalAction(null);
     
     try {
-      // Delete deterministic doc
-      await deleteDoc(doc(db, "blockedSlots", deterministicId));
-      // Also delete legacy doc if id differs
-      if (blockedId && blockedId !== deterministicId) {
-        await deleteDoc(doc(db, "blockedSlots", blockedId)).catch(() => {});
-      }
+      // Find and delete ALL blocked documents for this slot (both deterministic and legacy)
+      const q = query(
+        collection(db, "blockedSlots"),
+        where("barberId", "==", selectedBarberId),
+        where("date", "==", selectedDate),
+        where("time", "==", slotTime)
+      );
+      const snap = await getDocs(q);
+      await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+      await deleteDoc(doc(db, "blockedSlots", deterministicId)).catch(() => {});
       // UI will update immediately via onSnapshot listener
     } catch (err) {
       console.error("Error unblocking slot:", err);
