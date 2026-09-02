@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { barbers, shopInfo } from "@/config/barbers";
+import { formatLocalDate } from "@/lib/appointments";
 import "@/app/manage/manage-page.css";
 
 /**
@@ -65,7 +66,7 @@ export default function ManageAppointment({ appointmentId, token }) {
       setSelectedTime(null);
 
       try {
-        const dateStr = formatDate(selectedDate);
+        const dateStr = formatLocalDate(selectedDate);
         const res = await fetch(`/api/available-slots?barberId=${appointment.barberId}&date=${dateStr}`);
         const data = await res.json();
 
@@ -132,7 +133,7 @@ export default function ManageAppointment({ appointmentId, token }) {
         body: JSON.stringify({
           appointmentId,
           token,
-          newDate: formatDate(selectedDate),
+          newDate: formatLocalDate(selectedDate),
           newTime: selectedTime,
         }),
       });

@@ -173,13 +173,19 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Check if slot is blocked in blockedSlots collection (by deterministic document ID)
+    function isSlotBlocked(barberId, date, time) {
+      return exists(/databases/$(database)/documents/blockedSlots/$(barberId + "_" + date + "_" + time));
+    }
+
     // ----- APPOINTMENTS -----
     // Read: allowed (needed for slot availability checking — getBookedSlots)
-    // Create: allowed with strict validation
+    // Create: allowed with strict validation + must not be a blocked slot
     // Update/Delete: denied (no client-side modifications)
     match /appointments/{appointmentId} {
       allow read: if true;
-      allow create: if isValidAppointmentCreate(request.resource.data);
+      allow create: if isValidAppointmentCreate(request.resource.data) &&
+                    !isSlotBlocked(request.resource.data.barberId, request.resource.data.date, request.resource.data.time);
       allow update: if isAdmin() || (
         // Allow marking reminder as sent
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reminderSent', 'updatedAt']) &&
@@ -207,7 +213,9 @@ service cloud.firestore {
         request.resource.data.rescheduledAt is timestamp &&
         // Verify management token matches (defense-in-depth)
         resource.data.managementToken is string &&
-        request.resource.data.managementToken == resource.data.managementToken
+        request.resource.data.managementToken == resource.data.managementToken &&
+        // Ensure rescheduled slot is not blocked
+        !isSlotBlocked(resource.data.barberId, request.resource.data.date, request.resource.data.time)
       );
       allow delete: if false;
     }

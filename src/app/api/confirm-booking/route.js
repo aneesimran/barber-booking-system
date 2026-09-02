@@ -3,6 +3,9 @@ import {
   createOrFindCustomer,
   getBookedSlots,
   getBlockedSlots,
+  isSlotBlocked,
+  getBarberScheduleForDate,
+  generateTimeSlots,
 } from "@/lib/appointments";
 
 /**
@@ -42,11 +45,34 @@ export async function POST(request) {
       );
     }
 
-    // Check the slot is still available (prevent double-booking AND blocked slots)
+    // 1. Direct point-check against blocked slot (bypasses stale query cache)
+    const blocked = await isSlotBlocked(barberId, date, time);
+    if (blocked) {
+      return Response.json(
+        { error: "This time slot is no longer available. Please select another." },
+        { status: 409 }
+      );
+    }
+
+    // 2. Validate against barber working hours & date schedule overrides
+    const [y, m, d] = date.split("-").map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const schedule = await getBarberScheduleForDate(barberId, date);
+    if (schedule) {
+      const validSlots = generateTimeSlots(schedule, dateObj);
+      if (!validSlots.includes(time)) {
+        return Response.json(
+          { error: "This time slot is not within working hours. Please select another." },
+          { status: 409 }
+        );
+      }
+    }
+
+    // 3. Check the slot is still available (prevent double-booking AND blocked slots)
     console.log("Checking booked and blocked slots...");
     const [bookedSlots, blockedSlots] = await Promise.all([
-      getBookedSlots(barberId, date),
-      getBlockedSlots(barberId, date),
+      getBookedSlots(barberId, date, { throwOnError: true }),
+      getBlockedSlots(barberId, date, { throwOnError: true }),
     ]);
     console.log("Booked slots:", bookedSlots);
     console.log("Blocked slots:", blockedSlots);

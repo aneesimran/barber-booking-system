@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { barbers } from "@/config/barbers";
 import { formatLocalDate } from "@/lib/appointments";
@@ -24,8 +24,12 @@ export default function DashboardPage() {
     if (!selectedBlockedSlot) return;
     setUnblockingLoading(true);
     try {
+      const deterministicId = `${selectedBlockedSlot.barberId}_${selectedBlockedSlot.date}_${selectedBlockedSlot.time}`;
       await deleteDoc(doc(db, "blockedSlots", selectedBlockedSlot.id));
-      setAppointments(prev => prev.filter(item => item.id !== selectedBlockedSlot.id));
+      if (selectedBlockedSlot.id !== deterministicId) {
+        await deleteDoc(doc(db, "blockedSlots", deterministicId)).catch(() => {});
+      }
+      setAppointments(prev => prev.filter(item => item.id !== selectedBlockedSlot.id && item.id !== deterministicId));
       setSelectedBlockedSlot(null);
     } catch (err) {
       console.error(err);
@@ -175,61 +179,77 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    const fetchBookings = async (showSkeleton = false) => {
-      if (showSkeleton) setLoading(true);
-      try {
-        // Query appointments
-        const apptQ = query(
-          collection(db, "appointments"),
-          where("date", "==", selectedDate)
-        );
-        const apptSnap = await getDocs(apptQ);
-        
-        const bookingsData = [];
-        for (const d of apptSnap.docs) {
-          const appt = d.data();
-          const customerSnap = await getDoc(doc(db, "customers", appt.customerId));
-          const customer = customerSnap.exists() ? customerSnap.data() : { name: "Unknown", phone: "", email: "" };
-          bookingsData.push({ id: d.id, ...appt, customer, isBlockedSlot: false });
-        }
-        
-        // Query blocked slots
-        const blockedQ = query(
-          collection(db, "blockedSlots"),
-          where("date", "==", selectedDate)
-        );
-        const blockedSnap = await getDocs(blockedQ);
-        const blockedData = blockedSnap.docs.map(doc => {
-          const b = doc.data();
-          return {
-            id: doc.id,
-            barberId: b.barberId,
-            date: b.date,
-            time: b.time,
-            reason: b.reason || "Manual Block",
-            isBlockedSlot: true
-          };
-        });
+    let isMounted = true;
 
-        const combined = [...bookingsData, ...blockedData];
-        combined.sort((a, b) => a.time.localeCompare(b.time));
-        setAppointments(combined);
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
-      } finally {
-        if (showSkeleton) setLoading(false);
-      }
+    let latestAppts = [];
+    let latestBlocked = [];
+
+    const startListeners = () => {
+      setLoading(true);
+    };
+    startListeners();
+
+    const combineAndSet = () => {
+      if (!isMounted) return;
+      const combined = [...latestAppts, ...latestBlocked];
+      combined.sort((a, b) => a.time.localeCompare(b.time));
+      setAppointments(combined);
+      setLoading(false);
     };
 
-    // Initial load (show loading spinner)
-    fetchBookings(true);
+    // 1. Real-time appointments listener
+    const apptQ = query(
+      collection(db, "appointments"),
+      where("date", "==", selectedDate)
+    );
+    const unsubAppts = onSnapshot(apptQ, async (snap) => {
+      const bookingsData = [];
+      for (const d of snap.docs) {
+        const appt = d.data();
+        let customer = { name: "Unknown", phone: "", email: "" };
+        if (appt.customerId) {
+          try {
+            const customerSnap = await getDoc(doc(db, "customers", appt.customerId));
+            if (customerSnap.exists()) customer = customerSnap.data();
+          } catch {}
+        }
+        bookingsData.push({ id: d.id, ...appt, customer, isBlockedSlot: false });
+      }
+      latestAppts = bookingsData;
+      combineAndSet();
+    }, (err) => {
+      console.error("Dashboard appts snapshot error:", err);
+      if (isMounted) setLoading(false);
+    });
 
-    // Auto-refresh every 5 minutes (300,000 ms) in the background
-    const intervalId = setInterval(() => {
-      fetchBookings(false);
-    }, 300000);
+    // 2. Real-time blocked slots listener
+    const blockedQ = query(
+      collection(db, "blockedSlots"),
+      where("date", "==", selectedDate)
+    );
+    const unsubBlocked = onSnapshot(blockedQ, (snap) => {
+      latestBlocked = snap.docs.map(doc => {
+        const b = doc.data();
+        return {
+          id: doc.id,
+          barberId: b.barberId,
+          date: b.date,
+          time: b.time,
+          reason: b.reason || "Manual Block",
+          isBlockedSlot: true
+        };
+      });
+      combineAndSet();
+    }, (err) => {
+      console.error("Dashboard blocked snapshot error:", err);
+      if (isMounted) setLoading(false);
+    });
 
-    return () => clearInterval(intervalId);
+    return () => {
+      isMounted = false;
+      unsubAppts();
+      unsubBlocked();
+    };
   }, [selectedDate]);
 
   return (
@@ -295,7 +315,7 @@ export default function DashboardPage() {
             return (
               <div key={barber.id} className="bg-[#111] border border-[#222] rounded-xl overflow-hidden">
                 <div className="bg-[#1a1a1a] p-4 border-b border-[#222] flex justify-between items-center">
-                  <h2 className="font-bold text-lg">{barber.name}'s Schedule</h2>
+                  <h2 className="font-bold text-lg">{barber.name}&apos;s Schedule</h2>
                   <span className="text-xs bg-[var(--gold)]/10 text-[var(--gold)] px-2 py-1 rounded-full font-medium">
                     {bookingsCount} {bookingsCount === 1 ? "booking" : "bookings"}
                     {blockedCount > 0 && ` • ${blockedCount} blocked`}

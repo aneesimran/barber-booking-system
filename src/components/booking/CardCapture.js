@@ -3,7 +3,15 @@
 import { useState, useEffect } from "react";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { getStripe } from "@/lib/stripe";
-import { getBookedSlots, getBlockedSlots, createOrFindCustomer, createAppointment } from "@/lib/appointments";
+import { 
+  getBookedSlots, 
+  getBlockedSlots, 
+  isSlotBlocked, 
+  getBarberScheduleForDate, 
+  generateTimeSlots, 
+  createOrFindCustomer, 
+  createAppointment 
+} from "@/lib/appointments";
 
 import TermsModal from "./TermsModal";
 
@@ -59,6 +67,31 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
     initSetupIntent();
   }, [customerDetails]);
 
+  async function validateSlotAvailabilityOrThrow(barberId, date, time) {
+    // 1. Direct point-check against blocked slot (bypasses stale client cache)
+    const blocked = await isSlotBlocked(barberId, date, time);
+    if (blocked) {
+      throw new Error("This time slot is no longer available. Please select another time.");
+    }
+
+    // 2. Validate against active working hours & date schedule overrides
+    const [y, m, d] = date.split("-").map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const schedule = await getBarberScheduleForDate(barberId, date);
+    if (schedule) {
+      const validSlots = generateTimeSlots(schedule, dateObj);
+      if (!validSlots.includes(time)) {
+        throw new Error("This time slot is no longer available. Please select another time.");
+      }
+    }
+
+    // 3. Verify against booked slots with throwOnError enabled
+    const bookedSlots = await getBookedSlots(barberId, date, { throwOnError: true });
+    if (bookedSlots.includes(time)) {
+      throw new Error("This time slot has just been booked. Please select another time.");
+    }
+  }
+
   const handleConfirmWithSavedCard = async (e) => {
     e.preventDefault();
     setProcessing(true);
@@ -67,16 +100,8 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
     try {
       const { barberId, date, time } = bookingData;
       
-      const [bookedSlots, blockedSlots] = await Promise.all([
-        getBookedSlots(barberId, date),
-        getBlockedSlots(barberId, date),
-      ]);
-      if (bookedSlots.includes(time)) {
-        throw new Error("This time slot has just been booked. Please start over.");
-      }
-      if (blockedSlots.includes(time)) {
-        throw new Error("This time slot is no longer available. Please start over.");
-      }
+      // Enforce strict multi-layer availability check
+      await validateSlotAvailabilityOrThrow(barberId, date, time);
 
       const firestoreCustomerId = await createOrFindCustomer({
         name: customerDetails.name,
@@ -111,7 +136,11 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
       onSuccess({ success: true, appointmentId, message: "Booking confirmed using your saved card!" });
     } catch (err) {
       console.error("Saved card confirmation error:", err);
-      setCardError(err.message || "Something went wrong");
+      let errMsg = err.message || "Something went wrong";
+      if (err.code === "permission-denied" || (err.message && err.message.toLowerCase().includes("permission"))) {
+        errMsg = "This time slot is no longer available. Please select another time.";
+      }
+      setCardError(errMsg);
       if (onError) onError(err);
     } finally {
       setProcessing(false);
@@ -142,16 +171,8 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
 
       const { barberId, date, time } = bookingData;
       
-      const [bookedSlots, blockedSlots] = await Promise.all([
-        getBookedSlots(barberId, date),
-        getBlockedSlots(barberId, date),
-      ]);
-      if (bookedSlots.includes(time)) {
-        throw new Error("This time slot has just been booked. Please start over.");
-      }
-      if (blockedSlots.includes(time)) {
-        throw new Error("This time slot is no longer available. Please start over.");
-      }
+      // Enforce strict multi-layer availability check
+      await validateSlotAvailabilityOrThrow(barberId, date, time);
 
       const firestoreCustomerId = await createOrFindCustomer({
         name: customerDetails.name,
@@ -186,7 +207,11 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
       onSuccess({ success: true, appointmentId, message: "Booking confirmed!" });
     } catch (err) {
       console.error("Payment error:", err);
-      setCardError(err.message || "Something went wrong");
+      let errMsg = err.message || "Something went wrong";
+      if (err.code === "permission-denied" || (err.message && err.message.toLowerCase().includes("permission"))) {
+        errMsg = "This time slot is no longer available. Please select another time.";
+      }
+      setCardError(errMsg);
       if (onError) onError(err);
     } finally {
       setProcessing(false);

@@ -7,15 +7,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [error, setError] = useState(() => 
+    searchParams.get("error") === "unauthorized" ? "Your account is not authorized to access the admin dashboard." : ""
+  );
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (searchParams.get("error") === "unauthorized") {
-      setError("Your account is not authorized to access the admin dashboard.");
-    }
     
     // Auto redirect if already logged in
     const unsubscribe = onAuthStateChanged(auth, (user) => {

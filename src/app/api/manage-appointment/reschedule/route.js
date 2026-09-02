@@ -3,6 +3,7 @@ import {
   updateAppointmentRest,
   getBookedSlots,
   getBlockedSlots,
+  isSlotBlocked,
   getBarberScheduleForDate,
   generateTimeSlots,
 } from "@/lib/appointments";
@@ -119,10 +120,19 @@ export async function POST(request) {
       );
     }
 
+    // Check if new slot is blocked
+    const isBlocked = await isSlotBlocked(appointment.barberId, newDate, newTime);
+    if (isBlocked) {
+      return Response.json(
+        { error: "The selected time slot is no longer available" },
+        { status: 409 }
+      );
+    }
+
     // Check new slot is available (exclude current appointment from booked check)
     const [bookedSlots, blockedSlots] = await Promise.all([
-      getBookedSlots(appointment.barberId, newDate),
-      getBlockedSlots(appointment.barberId, newDate),
+      getBookedSlots(appointment.barberId, newDate, { throwOnError: true }),
+      getBlockedSlots(appointment.barberId, newDate, { throwOnError: true }),
     ]);
 
     // If rescheduling to same date, the current appointment's slot should not count as booked

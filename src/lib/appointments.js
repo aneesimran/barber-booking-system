@@ -3,6 +3,7 @@ import {
   query,
   where,
   getDocs,
+  getDocFromServer,
   addDoc,
   serverTimestamp,
   doc,
@@ -12,6 +13,17 @@ import {
 import { db } from "./firebase";
 import { randomUUID } from "crypto";
 import { barbers, dayKeys, shopInfo } from "@/config/barbers";
+
+/**
+ * Returns deterministic document ID for a blocked slot.
+ * @param {string} barberId - e.g. "imran" or "ali"
+ * @param {string} date - "YYYY-MM-DD"
+ * @param {string} time - "HH:MM"
+ * @returns {string} e.g. "imran_2026-09-03_12:00"
+ */
+export function getBlockedSlotId(barberId, date, time) {
+  return `${barberId}_${date}_${time}`;
+}
 
 /**
  * Formats a Date object as "YYYY-MM-DD" in local time.
@@ -169,7 +181,7 @@ async function getBookedSlotsRest(barberId, dateString) {
     return bookedSlots;
   } catch (err) {
     console.error("Error in getBookedSlotsRest:", err);
-    return [];
+    throw err;
   }
 }
 
@@ -225,7 +237,36 @@ async function getBlockedSlotsRest(barberId, dateString) {
     return blockedSlots;
   } catch (err) {
     console.error("Error in getBlockedSlotsRest:", err);
-    return [];
+    throw err;
+  }
+}
+
+/**
+ * Check if a specific slot is blocked via Firestore REST API.
+ * First checks direct document /blockedSlots/{barberId}_{date}_{time}.
+ * Falls back to collection query for backward compatibility.
+ * @param {string} barberId
+ * @param {string} dateString - "YYYY-MM-DD"
+ * @param {string} timeString - "HH:MM"
+ * @returns {Promise<boolean>}
+ */
+export async function isSlotBlockedRest(barberId, dateString, timeString) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const docId = getBlockedSlotId(barberId, dateString, timeString);
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/blockedSlots/${docId}`;
+  
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (res.ok) return true;
+    if (res.status === 404) {
+      // Check collection query as fallback for legacy random ID docs
+      const blocked = await getBlockedSlotsRest(barberId, dateString);
+      return blocked.includes(timeString);
+    }
+    throw new Error(`REST blocked check error: ${res.statusText}`);
+  } catch (err) {
+    console.error("Error in isSlotBlockedRest:", err);
+    throw err;
   }
 }
 
@@ -313,6 +354,12 @@ async function createOrFindCustomerRest(data) {
 }
 
 async function createAppointmentRest(data) {
+  // Pre-write verification: ensure slot is not blocked
+  const blocked = await isSlotBlockedRest(data.barberId, data.date, data.time);
+  if (blocked) {
+    throw new Error("This time slot is blocked and cannot be booked.");
+  }
+
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const createUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/appointments`;
   const managementToken = randomUUID();
@@ -515,11 +562,18 @@ export function generateTimeSlots(schedule, date) {
  * Fetch booked appointment times for a barber on a specific date from Firestore.
  * @param {string} barberId
  * @param {string} dateString - ISO date string "YYYY-MM-DD"
+ * @param {Object} [options]
+ * @param {boolean} [options.throwOnError=false]
  * @returns {Promise<string[]>} Array of booked time strings like ["09:00", "10:40"]
  */
-export async function getBookedSlots(barberId, dateString) {
+export async function getBookedSlots(barberId, dateString, { throwOnError = false } = {}) {
   if (typeof window === "undefined") {
-    return getBookedSlotsRest(barberId, dateString);
+    try {
+      return await getBookedSlotsRest(barberId, dateString);
+    } catch (err) {
+      if (throwOnError) throw err;
+      return [];
+    }
   }
 
   try {
@@ -540,6 +594,7 @@ export async function getBookedSlots(barberId, dateString) {
       .map((doc) => doc.data().time);
   } catch (error) {
     console.error("Error fetching booked slots:", error);
+    if (throwOnError) throw error;
     return [];
   }
 }
@@ -623,11 +678,18 @@ export async function getBarberScheduleForDate(barberId, dateString) {
  * Fetch blocked slots for a barber on a specific date.
  * @param {string} barberId 
  * @param {string} dateString 
+ * @param {Object} [options]
+ * @param {boolean} [options.throwOnError=false]
  * @returns {Promise<string[]>} Array of blocked time strings
  */
-export async function getBlockedSlots(barberId, dateString) {
+export async function getBlockedSlots(barberId, dateString, { throwOnError = false } = {}) {
   if (typeof window === "undefined") {
-    return getBlockedSlotsRest(barberId, dateString);
+    try {
+      return await getBlockedSlotsRest(barberId, dateString);
+    } catch (err) {
+      if (throwOnError) throw err;
+      return [];
+    }
   }
 
   try {
@@ -641,7 +703,43 @@ export async function getBlockedSlots(barberId, dateString) {
     return snapshot.docs.map(doc => doc.data().time);
   } catch (err) {
     console.error("Error fetching blocked slots:", err);
+    if (throwOnError) throw err;
     return [];
+  }
+}
+
+/**
+ * Check if a specific slot is blocked (direct document lookup + collection fallback).
+ * Uses getDocFromServer on client to guarantee fresh server state bypassing local cache.
+ * @param {string} barberId
+ * @param {string} dateString - "YYYY-MM-DD"
+ * @param {string} timeString - "HH:MM"
+ * @returns {Promise<boolean>}
+ */
+export async function isSlotBlocked(barberId, dateString, timeString) {
+  if (typeof window === "undefined") {
+    return isSlotBlockedRest(barberId, dateString, timeString);
+  }
+
+  const slotId = getBlockedSlotId(barberId, dateString, timeString);
+  try {
+    const docRef = doc(db, "blockedSlots", slotId);
+    let snap = null;
+    try {
+      snap = await getDocFromServer(docRef);
+    } catch (serverErr) {
+      console.warn("getDocFromServer failed, falling back to getDoc:", serverErr);
+      snap = await getDoc(docRef);
+    }
+
+    if (snap && snap.exists()) return true;
+
+    // Fallback check against collection query for legacy random-ID docs
+    const blockedSlots = await getBlockedSlots(barberId, dateString, { throwOnError: true });
+    return blockedSlots.includes(timeString);
+  } catch (err) {
+    console.error("Error in isSlotBlocked:", err);
+    throw err;
   }
 }
 
@@ -688,11 +786,17 @@ export async function getAvailableSlots(barberId, date) {
 /**
  * Create an appointment document in Firestore.
  * @param {Object} data
- * @returns {Promise<string>} The new document ID
+ * @returns {Promise<{ appointmentId: string, managementToken: string }>}
  */
 export async function createAppointment(data) {
   if (typeof window === "undefined") {
     return createAppointmentRest(data);
+  }
+
+  // Pre-write verification: slot must not be blocked
+  const blocked = await isSlotBlocked(data.barberId, data.date, data.time);
+  if (blocked) {
+    throw new Error("This time slot is no longer available. Please select another.");
   }
 
   const managementToken = crypto.randomUUID();

@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, getDoc, setDoc, deleteDoc, doc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { barbers } from "@/config/barbers";
-import { getBarberScheduleForDate, generateTimeSlots, getBookedSlots, formatLocalDate } from "@/lib/appointments";
+import { getBarberScheduleForDate, generateTimeSlots, formatLocalDate, getBlockedSlotId } from "@/lib/appointments";
 
 export default function BlockedSlotsPage() {
   const [selectedBarberId, setSelectedBarberId] = useState(barbers[0].id);
@@ -53,48 +53,116 @@ export default function BlockedSlotsPage() {
     return isToday ? `${formatted} (Today)` : formatted;
   };
 
+  // Real-time synchronization for appointments and blocked slots
   useEffect(() => {
-    const fetchSlots = async () => {
+    let unsubscribeAppts = null;
+    let unsubscribeBlocked = null;
+    let isMounted = true;
+
+    const setupRealtimeListeners = async () => {
       setLoading(true);
       try {
         const [y, m, d] = selectedDate.split("-").map(Number);
         const localDate = new Date(y, m - 1, d);
         
         const schedule = await getBarberScheduleForDate(selectedBarberId, selectedDate);
+        if (!isMounted) return;
+
         const allTimes = generateTimeSlots(schedule, localDate);
-        
-        const bookedTimes = await getBookedSlots(selectedBarberId, selectedDate);
-        
+
+        let latestBookedTimes = [];
+        let latestBlockedDocs = [];
+
+        const updateSlotGrid = () => {
+          if (!isMounted) return;
+          const slotsData = allTimes.map(time => {
+            const isBooked = latestBookedTimes.includes(time);
+            const blockedDoc = latestBlockedDocs.find(b => b.time === time);
+            return {
+              time,
+              isBooked,
+              isBlocked: !!blockedDoc,
+              blockedId: blockedDoc ? blockedDoc.id : null,
+              reason: blockedDoc ? blockedDoc.reason : null,
+              loading: false,
+            };
+          });
+          setSlots(slotsData);
+          setLoading(false);
+        };
+
+        // 1. Real-time listener for appointments
+        const apptQ = query(
+          collection(db, "appointments"),
+          where("barberId", "==", selectedBarberId),
+          where("date", "==", selectedDate)
+        );
+
+        unsubscribeAppts = onSnapshot(apptQ, (snap) => {
+          latestBookedTimes = snap.docs
+            .filter(d => {
+              const status = d.data().status;
+              return status === "confirmed" || status === "completed";
+            })
+            .map(d => d.data().time);
+          updateSlotGrid();
+        }, (err) => {
+          console.error("Appointments snapshot error:", err);
+          if (isMounted) setLoading(false);
+        });
+
+        // 2. Real-time listener for blocked slots
         const blockedQ = query(
           collection(db, "blockedSlots"),
           where("barberId", "==", selectedBarberId),
           where("date", "==", selectedDate)
         );
-        const blockedSnap = await getDocs(blockedQ);
-        const blockedDocs = blockedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        const slotsData = allTimes.map(time => {
-          const isBooked = bookedTimes.includes(time);
-          const blockedDoc = blockedDocs.find(b => b.time === time);
-          return {
-            time,
-            isBooked,
-            isBlocked: !!blockedDoc,
-            blockedId: blockedDoc ? blockedDoc.id : null,
-            reason: blockedDoc ? blockedDoc.reason : null,
-            loading: false,
-          };
+        unsubscribeBlocked = onSnapshot(blockedQ, (snap) => {
+          latestBlockedDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+          // Auto-migrate any legacy random-ID blocks for today/future to deterministic IDs
+          const todayStr = formatLocalDate(new Date());
+          if (selectedDate >= todayStr && auth.currentUser) {
+            snap.docs.forEach(d => {
+              const data = d.data();
+              if (data.barberId && data.date && data.time) {
+                const detId = getBlockedSlotId(data.barberId, data.date, data.time);
+                if (d.id !== detId) {
+                  setDoc(doc(db, "blockedSlots", detId), {
+                    barberId: data.barberId,
+                    date: data.date,
+                    time: data.time,
+                    reason: data.reason || "Manual Block",
+                    createdAt: data.createdAt || serverTimestamp(),
+                    createdBy: data.createdBy || auth.currentUser?.uid || "unknown"
+                  }).catch(e => console.warn("Auto-migration notice:", e));
+                }
+              }
+            });
+          }
+
+          updateSlotGrid();
+        }, (err) => {
+          console.error("Blocked slots snapshot error:", err);
+          if (isMounted) setLoading(false);
         });
-        setSlots(slotsData);
+
       } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+        console.error("Error setting up listeners:", err);
+        if (isMounted) setLoading(false);
       }
     };
+
     if (selectedBarberId && selectedDate) {
-      fetchSlots();
+      setupRealtimeListeners();
     }
+
+    return () => {
+      isMounted = false;
+      if (unsubscribeAppts) unsubscribeAppts();
+      if (unsubscribeBlocked) unsubscribeBlocked();
+    };
   }, [selectedBarberId, selectedDate]);
 
   const handleSlotClick = (slot) => {
@@ -113,6 +181,7 @@ export default function BlockedSlotsPage() {
     
     const slotTime = selectedSlotForModal.time;
     const finalReason = reason.trim() || "Manual Block";
+    const slotDocId = getBlockedSlotId(selectedBarberId, selectedDate, slotTime);
     
     // Set loading in UI list
     setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: true } : s));
@@ -122,7 +191,38 @@ export default function BlockedSlotsPage() {
     setModalAction(null);
     
     try {
-      const newDoc = await addDoc(collection(db, "blockedSlots"), {
+      // 1. Double check Firestore for any active confirmed appointments for this slot
+      const apptQ = query(
+        collection(db, "appointments"),
+        where("barberId", "==", selectedBarberId),
+        where("date", "==", selectedDate),
+        where("time", "==", slotTime)
+      );
+      const apptSnap = await getDocs(apptQ);
+      const activeAppt = apptSnap.docs.find(d => {
+        const s = d.data().status;
+        return s === "confirmed" || s === "completed";
+      });
+
+      if (activeAppt) {
+        let customerInfo = "a customer";
+        const customerId = activeAppt.data().customerId;
+        if (customerId) {
+          try {
+            const custSnap = await getDoc(doc(db, "customers", customerId));
+            if (custSnap.exists()) {
+              const c = custSnap.data();
+              customerInfo = `${c.name || "Customer"}${c.phone ? ` (${c.phone})` : ""}`;
+            }
+          } catch {}
+        }
+        setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: false } : s));
+        alert(`Cannot block this slot: It is already booked by ${customerInfo}.\n\nPlease cancel the booking from the Dashboard first if you need to free up this time slot.`);
+        return;
+      }
+
+      // 2. Write block with deterministic document ID: {barberId}_{date}_{time}
+      await setDoc(doc(db, "blockedSlots", slotDocId), {
         barberId: selectedBarberId,
         date: selectedDate,
         time: slotTime,
@@ -130,25 +230,21 @@ export default function BlockedSlotsPage() {
         createdAt: serverTimestamp(),
         createdBy: auth.currentUser?.uid || "unknown"
       });
-      setSlots(prev => prev.map(s => s.time === slotTime ? { 
-        ...s, 
-        isBlocked: true, 
-        blockedId: newDoc.id, 
-        reason: finalReason,
-        loading: false 
-      } : s));
+
+      // UI will update immediately via real-time onSnapshot listener
     } catch (err) {
-      console.error(err);
+      console.error("Error blocking slot:", err);
       setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: false } : s));
       alert("Failed to block slot. Check permissions.");
     }
   };
 
   const executeUnblock = async () => {
-    if (!selectedSlotForModal || !selectedSlotForModal.blockedId) return;
+    if (!selectedSlotForModal) return;
     
     const slotTime = selectedSlotForModal.time;
-    const blockedId = selectedSlotForModal.blockedId;
+    const deterministicId = getBlockedSlotId(selectedBarberId, selectedDate, slotTime);
+    const blockedId = selectedSlotForModal.blockedId || deterministicId;
     
     // Set loading in UI list
     setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: true } : s));
@@ -158,16 +254,15 @@ export default function BlockedSlotsPage() {
     setModalAction(null);
     
     try {
-      await deleteDoc(doc(db, "blockedSlots", blockedId));
-      setSlots(prev => prev.map(s => s.time === slotTime ? { 
-        ...s, 
-        isBlocked: false, 
-        blockedId: null, 
-        reason: null,
-        loading: false 
-      } : s));
+      // Delete deterministic doc
+      await deleteDoc(doc(db, "blockedSlots", deterministicId));
+      // Also delete legacy doc if id differs
+      if (blockedId && blockedId !== deterministicId) {
+        await deleteDoc(doc(db, "blockedSlots", blockedId)).catch(() => {});
+      }
+      // UI will update immediately via onSnapshot listener
     } catch (err) {
-      console.error(err);
+      console.error("Error unblocking slot:", err);
       setSlots(prev => prev.map(s => s.time === slotTime ? { ...s, loading: false } : s));
       alert("Failed to unblock slot. Check permissions.");
     }
