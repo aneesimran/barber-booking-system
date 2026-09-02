@@ -55,19 +55,19 @@ export default function CustomerForm({ customerDetails, onSubmit }) {
     <div className="animate-fade-in-up">
       <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 text-center" style={{ fontFamily: "'Playfair Display', serif" }}>Your Details</h2>
       <p className="text-sm text-[var(--text-muted)] text-center mb-6">We&apos;ll use this to confirm your booking</p>
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-sm mx-auto">
+      <form noValidate onSubmit={handleSubmit} className="space-y-4 max-w-sm mx-auto">
         <div>
-          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 pl-1">Full Name</label>
+          <label htmlFor="customer-name" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 pl-1">Full Name</label>
           <input type="text" id="customer-name" placeholder="e.g. John Smith" value={form.name} onChange={(e) => handleChange("name", e.target.value)} onBlur={() => handleBlur("name")} className={ic("name")} autoComplete="name" />
           {errors.name && touched.name && <p className="text-red-400 text-xs mt-1.5 pl-1">{errors.name}</p>}
         </div>
         <div>
-          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 pl-1">Email Address</label>
+          <label htmlFor="customer-email" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 pl-1">Email Address</label>
           <input type="email" id="customer-email" placeholder="e.g. john@example.com" value={form.email} onChange={(e) => handleChange("email", e.target.value)} onBlur={() => handleBlur("email")} className={ic("email")} autoComplete="email" />
           {errors.email && touched.email && <p className="text-red-400 text-xs mt-1.5 pl-1">{errors.email}</p>}
         </div>
         <div>
-          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 pl-1">UK Mobile Number</label>
+          <label htmlFor="customer-phone" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 pl-1">UK Mobile Number</label>
           <input type="tel" id="customer-phone" placeholder="e.g. 07700 900123" value={form.phone} onChange={(e) => handleChange("phone", e.target.value)} onBlur={() => handleBlur("phone")} className={ic("phone")} autoComplete="tel" />
           {errors.phone && touched.phone && <p className="text-red-400 text-xs mt-1.5 pl-1">{errors.phone}</p>}
         </div>
