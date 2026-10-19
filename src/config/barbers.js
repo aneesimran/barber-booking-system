@@ -10,7 +10,7 @@ export const barbers = [
     name: "Imran (Anees)",
     phone: "07930383297",
     role: "Owner & Barber",
-    bio: "Over 35 years of experience with a diploma in barbering. Delivering razor-sharp skin fades and master precision on every cut.",
+    bio: "Over 35 years behind the chair with a diploma in barbering. Specialist in razor-sharp skin fades, precision scissor work, and timeless styling.",
     specialties: ["Skin Fades", "Beard Shaping", "Classic Cuts", "Hair Design"],
     image: "/images/imran.jpg",
     rating: 4.9,
