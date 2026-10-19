@@ -23,14 +23,18 @@ export default function BarberCard({ barber, index }) {
           {/* Image overlay gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-70" />
 
-          {/* Trainee floating badge */}
-          {barber.isTrainee && (
+          {/* Floating badge */}
+          {barber.isTrainee ? (
             <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-[var(--gold)] text-[#0a0a0a] text-[11px] font-extrabold tracking-wide uppercase shadow-[0_4px_14px_rgba(201,168,76,0.45)] flex items-center gap-1.5">
               <span>50% OFF</span>
               <span className="opacity-50">•</span>
               <span>LEARNER</span>
             </div>
-          )}
+          ) : barber.experienceBadge ? (
+            <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[var(--gold)]/40 text-[var(--gold)] text-[11px] font-bold tracking-wide uppercase shadow-[0_4px_14px_rgba(0,0,0,0.5)] flex items-center gap-1.5">
+              <span>{barber.experienceBadge}</span>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -45,6 +49,13 @@ export default function BarberCard({ barber, index }) {
             {barber.name}
           </h3>
           <p className="text-sm text-[var(--gold)] font-medium mb-3">{barber.role}</p>
+
+          {/* Bio */}
+          {barber.bio && (
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed mb-4">
+              {barber.bio}
+            </p>
+          )}
 
           {barber.isTrainee && (
             <div className="mb-4 p-3 rounded-lg bg-[rgba(201,168,76,0.12)] border border-[var(--gold)]/40 text-xs text-[var(--text-secondary)] leading-relaxed">
