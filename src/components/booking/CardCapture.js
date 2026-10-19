@@ -269,7 +269,7 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
             {processing ? (
               <><div className="w-4 h-4 border-2 border-[#0a0a0a]/30 border-t-[#0a0a0a] rounded-full animate-spin" /> Confirming...</>
             ) : (
-              <>Confirm Booking</>
+              <>{bookingData?.isTrainee ? "Confirm Booking (50% Off)" : "Confirm Booking"}</>
             )}
           </button>
         </form>
@@ -316,7 +316,7 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
           {processing ? (
             <><div className="w-4 h-4 border-2 border-[#0a0a0a]/30 border-t-[#0a0a0a] rounded-full animate-spin" /> Processing...</>
           ) : (
-            <>Confirm Booking</>
+            <>{bookingData?.isTrainee ? "Confirm Booking (50% Off)" : "Confirm Booking"}</>
           )}
         </button>
       </form>

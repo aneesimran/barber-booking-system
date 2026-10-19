@@ -59,6 +59,15 @@ export default function BookingConfirmation({ barber, date, time }) {
             <span className="text-xs uppercase tracking-widest text-[var(--text-muted)]">Duration</span>
             <span className="text-sm font-semibold text-white">{shopInfo.appointmentDuration} mins</span>
           </div>
+          {barber.isTrainee && (
+            <>
+              <div className="h-px bg-[var(--glass-border)]" />
+              <div className="flex justify-between items-center">
+                <span className="text-xs uppercase tracking-widest text-[var(--text-muted)]">Special Rate</span>
+                <span className="text-sm font-semibold text-[var(--gold)]">50% Off (Learning Barbering)</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

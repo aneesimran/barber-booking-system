@@ -75,6 +75,17 @@ export default function BookingWizard({ barber }) {
           </div>
         </div>
 
+        {/* Trainee Notice Banner */}
+        {barber.isTrainee && (
+          <div className="mb-6 p-4 rounded-xl bg-[rgba(201,168,76,0.12)] border border-[var(--gold)]/40 flex items-start gap-3 text-xs leading-relaxed">
+            <span className="text-xl leading-none shrink-0 mt-0.5">✂️</span>
+            <div>
+              <p className="font-bold text-[var(--gold)] text-sm mb-1">50% Off — Learning Barbering Notice</p>
+              <p className="text-[var(--text-secondary)]">Please note: The 50% discount on haircuts with {barber.name} is offered solely because he is currently learning barbering. Payment is settled in-store at half price.</p>
+            </div>
+          </div>
+        )}
+
         {/* Progress */}
         <ProgressBar currentStep={step} />
 
@@ -95,12 +106,12 @@ export default function BookingWizard({ barber }) {
             <TimeSlotPicker barberId={barber.id} selectedDate={selectedDate} selectedTime={selectedTime} onSelectTime={handleTimeSelect} />
           )}
           {step === 3 && (
-            <CustomerForm customerDetails={customerDetails} onSubmit={handleCustomerSubmit} />
+            <CustomerForm customerDetails={customerDetails} onSubmit={handleCustomerSubmit} isTrainee={barber.isTrainee} />
           )}
           {step === 4 && (
             <CardCapture
               customerDetails={customerDetails}
-              bookingData={{ barberId: barber.id, date: dateString, time: selectedTime }}
+              bookingData={{ barberId: barber.id, isTrainee: barber.isTrainee, date: dateString, time: selectedTime }}
               onSuccess={handleBookingSuccess}
             />
           )}

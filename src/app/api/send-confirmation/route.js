@@ -25,6 +25,20 @@ export async function POST(request) {
     // Resolve barber display name
     const barber = barbers.find((b) => b.id === barberId);
     const barberName = barber ? barber.name : barberId;
+    const barberDisplayName = barber?.isTrainee ? `${barberName} (Trainee Barber)` : barberName;
+
+    const rateRowHtml = barber?.isTrainee ? `
+                    <tr style="border-top: 1px solid #222222;">
+                      <td style="padding: 12px 0 0 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #c9a84c;">Rate</td>
+                      <td style="padding: 12px 0 0 0; text-align: right; font-size: 14px; font-weight: 600; color: #c9a84c;">50% Off (Learning Barbering)</td>
+                    </tr>
+    ` : "";
+
+    const traineeNoteHtml = barber?.isTrainee ? `
+      <div style="background-color: rgba(201, 168, 76, 0.08); border: 1px solid rgba(201, 168, 76, 0.35); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #c9a84c; line-height: 1.5;">
+        <strong>✂️ 50% Discount Notice:</strong> All haircuts with ${barberName} are 50% off solely because he is currently learning barbering. Payment is settled in-store at half price.
+      </div>
+    ` : "";
 
     // Format Date (e.g. Friday, 29 May 2026)
     const [y, m, d] = date.split("-").map(Number);
@@ -172,11 +186,13 @@ export async function POST(request) {
                 <div class="greeting">Hi ${name},</div>
                 <div class="intro">Your appointment has been successfully scheduled! We look forward to seeing you. Below are your booking details:</div>
                 
+                ${traineeNoteHtml}
+
                 <div class="details-card">
                   <table style="width: 100%; border-collapse: collapse; border-spacing: 0;">
                     <tr style="border-bottom: 1px solid #222222;">
                       <td style="padding: 12px 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Barber</td>
-                      <td style="padding: 12px 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">${barberName}</td>
+                      <td style="padding: 12px 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">${barberDisplayName}</td>
                     </tr>
                     <tr style="border-bottom: 1px solid #222222;">
                       <td style="padding: 12px 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Date</td>
@@ -190,6 +206,7 @@ export async function POST(request) {
                       <td style="padding: 12px 0 0 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Duration</td>
                       <td style="padding: 12px 0 0 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">20 Minutes</td>
                     </tr>
+                    ${rateRowHtml}
                   </table>
                 </div>
                 

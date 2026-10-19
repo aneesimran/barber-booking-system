@@ -3,13 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/auto-checkpoint.mjs && next dev",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "backup": "node scripts/backup-firestore.mjs",
+    "backup:firestore": "node scripts/backup-firestore.mjs",
+    "restore:firestore": "node scripts/restore-firestore.mjs",
+    "checkpoint": "node scripts/checkpoint.mjs",
+    "rollback": "node scripts/rollback.mjs",
+    "feature:start": "node scripts/safe-feature.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^6.3.0",

@@ -72,6 +72,27 @@ describe("DatePicker Component", () => {
     expect(wedBtn).toBeDisabled();
   });
 
+  it("disables Tuesdays and enables Sundays for Mudni", () => {
+    const handleSelectDate = vi.fn();
+    const { container } = render(
+      <DatePicker barberId="mudni" selectedDate={null} onSelectDate={handleSelectDate} />
+    );
+
+    // May 18 is Monday (Mudni works -> enabled)
+    const monBtn = container.querySelector("#date-2026-05-18");
+    expect(monBtn).not.toBeDisabled();
+    fireEvent.click(monBtn);
+    expect(handleSelectDate).toHaveBeenCalled();
+
+    // May 19 is Tuesday (Mudni off -> disabled)
+    const tueBtn = container.querySelector("#date-2026-05-19");
+    expect(tueBtn).toBeDisabled();
+
+    // May 24 is Sunday (Mudni works 10am-4pm -> enabled)
+    const sunBtn = container.querySelector("#date-2026-05-24");
+    expect(sunBtn).not.toBeDisabled();
+  });
+
   it("highlights the currently selected date", () => {
     const selected = new Date(2026, 4, 18);
     const { container } = render(

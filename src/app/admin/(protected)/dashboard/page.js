@@ -342,7 +342,7 @@ export default function DashboardPage() {
           No bookings or blocked slots found for this date.
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {barbers.map(barber => {
             const barberAppts = appointments.filter(a => a.barberId === barber.id);
             const bookingsCount = barberAppts.filter(a => !a.isBlockedSlot).length;

@@ -20,7 +20,7 @@ export default function BarberSelection() {
       </div>
 
       {/* Barber cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {barbers.map((barber, index) => (
           <BarberCard key={barber.id} barber={barber} index={index} />
         ))}

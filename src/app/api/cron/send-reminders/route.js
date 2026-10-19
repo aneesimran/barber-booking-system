@@ -130,7 +130,7 @@ export async function GET(request) {
         if (customerPhone) {
           const barber = barbers.find(b => b.id === barberId);
           const barberName = barber ? barber.name : barberId;
-          const contactPhone = barberId === "ali" ? "07538270142" : "07930383297";
+          const contactPhone = barber?.phone || (barberId === "ali" ? "07538270142" : barberId === "mudni" ? "07818442523" : "07930383297");
 
           // Format readable time (e.g. 10:00 AM)
           const timeFormatted = `${h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;

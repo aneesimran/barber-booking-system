@@ -55,7 +55,7 @@ describe("Firestore Security Rules Logic Verification", () => {
     }
 
     // BarberId
-    if (!["imran", "ali"].includes(data.barberId)) {
+    if (!["imran", "ali", "mudni"].includes(data.barberId)) {
       return { valid: false, reason: "Invalid barberId" };
     }
 
@@ -201,6 +201,12 @@ describe("Firestore Security Rules Logic Verification", () => {
     it("accepts a completely valid appointment document", () => {
       const res = isValidAppointmentCreate(validData, serverTime);
       expect(res.valid).toBe(true);
+    });
+
+    it("accepts appointments for imran, ali, and mudni", () => {
+      expect(isValidAppointmentCreate({ ...validData, barberId: "imran" }, serverTime).valid).toBe(true);
+      expect(isValidAppointmentCreate({ ...validData, barberId: "ali" }, serverTime).valid).toBe(true);
+      expect(isValidAppointmentCreate({ ...validData, barberId: "mudni" }, serverTime).valid).toBe(true);
     });
 
     it("rejects when an unknown barberId is specified", () => {

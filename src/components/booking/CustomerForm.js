@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function CustomerForm({ customerDetails, onSubmit }) {
+export default function CustomerForm({ customerDetails, onSubmit, isTrainee }) {
   const [form, setForm] = useState({
     name: customerDetails?.name || "",
     email: customerDetails?.email || "",
@@ -71,7 +71,9 @@ export default function CustomerForm({ customerDetails, onSubmit }) {
           <input type="tel" id="customer-phone" placeholder="e.g. 07700 900123" value={form.phone} onChange={(e) => handleChange("phone", e.target.value)} onBlur={() => handleBlur("phone")} className={ic("phone")} autoComplete="tel" />
           {errors.phone && touched.phone && <p className="text-red-400 text-xs mt-1.5 pl-1">{errors.phone}</p>}
         </div>
-        <button type="submit" className="btn-gold w-full text-sm mt-2" id="submit-details">Continue to Payment</button>
+        <button type="submit" className="btn-gold w-full text-sm mt-2" id="submit-details">
+          Continue to Payment{isTrainee ? " (50% Off)" : ""}
+        </button>
       </form>
     </div>
   );

@@ -86,4 +86,9 @@ describe("CustomerForm Component", () => {
     expect(screen.getByText(/enter a valid email/i)).toBeInTheDocument();
     expect(handleSubmit).not.toHaveBeenCalled();
   });
+
+  it("renders 50% Off on the submit button when isTrainee is true", () => {
+    render(<CustomerForm onSubmit={vi.fn()} isTrainee={true} />);
+    expect(screen.getByRole("button", { name: /continue to payment \(50% off\)/i })).toBeInTheDocument();
+  });
 });

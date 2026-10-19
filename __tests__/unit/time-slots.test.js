@@ -11,6 +11,7 @@ import { barbers } from "@/config/barbers";
 describe("Time Slots & Scheduling Engine", () => {
   const imranBarber = barbers.find((b) => b.id === "imran");
   const aliBarber = barbers.find((b) => b.id === "ali");
+  const mudniBarber = barbers.find((b) => b.id === "mudni");
 
   describe("formatLocalDate", () => {
     it("formats local date as YYYY-MM-DD regardless of time of day", () => {
@@ -87,7 +88,7 @@ describe("Time Slots & Scheduling Engine", () => {
       expect(wedSlots).toEqual([]);
     });
 
-    it("returns empty array for both barbers on Sunday", () => {
+    it("returns empty array for Imran and Ali on Sunday, but generates slots for Mudni (10:00 to 15:40)", () => {
       // 2026-05-10 is a Sunday
       const sunday = new Date(2026, 4, 10);
       const imranSlots = generateTimeSlots(
@@ -98,9 +99,50 @@ describe("Time Slots & Scheduling Engine", () => {
         { barberId: "ali", workingHours: aliBarber.workingHours, lunchBreak: aliBarber.lunchBreak },
         sunday
       );
+      const mudniSlots = generateTimeSlots(
+        { barberId: "mudni", workingHours: mudniBarber.workingHours, lunchBreak: mudniBarber.lunchBreak },
+        sunday
+      );
 
       expect(imranSlots).toEqual([]);
       expect(aliSlots).toEqual([]);
+      expect(mudniSlots.length).toBeGreaterThan(0);
+      expect(mudniSlots[0]).toBe("10:00");
+      expect(mudniSlots[mudniSlots.length - 1]).toBe("15:40"); // 10am to 4pm
+    });
+
+    it("generates 20-minute slots from 10:00 to 18:40 on a regular Monday for Mudni with no lunch break interruption", () => {
+      // 2026-05-04 is a Monday
+      const monday = new Date(2026, 4, 4);
+      const schedule = {
+        barberId: "mudni",
+        workingHours: mudniBarber.workingHours,
+        lunchBreak: mudniBarber.lunchBreak,
+      };
+
+      const slots = generateTimeSlots(schedule, monday);
+      expect(slots[0]).toBe("10:00");
+      expect(slots[1]).toBe("10:20");
+      expect(slots[slots.length - 1]).toBe("18:40"); // 10 to 6:40pm
+      // All intervals present without lunch break hole
+      expect(slots).toContain("13:00");
+      expect(slots).toContain("13:20");
+      expect(slots).toContain("13:40");
+      expect(slots).toContain("14:00");
+      expect(slots).toContain("14:20");
+    });
+
+    it("returns empty array for Mudni on Tuesday (closed day)", () => {
+      // 2026-05-05 is a Tuesday
+      const tuesday = new Date(2026, 4, 5);
+      const schedule = {
+        barberId: "mudni",
+        workingHours: mudniBarber.workingHours,
+        lunchBreak: mudniBarber.lunchBreak,
+      };
+
+      const slots = generateTimeSlots(schedule, tuesday);
+      expect(slots).toEqual([]);
     });
   });
 
@@ -147,6 +189,27 @@ describe("Time Slots & Scheduling Engine", () => {
       // Ali does not take 14:00-14:20 lunch break on Friday
       expect(slots).toContain("14:00");
       expect(slots).toContain("14:20");
+    });
+
+    it("excludes slots between 12:20 and 14:00 on Fridays for Mudni", () => {
+      // 2026-05-08 is a Friday
+      const friday = new Date(2026, 4, 8);
+      const schedule = {
+        barberId: "mudni",
+        workingHours: mudniBarber.workingHours,
+        lunchBreak: mudniBarber.lunchBreak,
+      };
+
+      const slots = generateTimeSlots(schedule, friday);
+
+      expect(slots).toContain("12:00"); // ends at 12:20, valid
+      expect(slots).not.toContain("12:20");
+      expect(slots).not.toContain("12:40");
+      expect(slots).not.toContain("13:00");
+      expect(slots).not.toContain("13:20");
+      expect(slots).not.toContain("13:40");
+      expect(slots).toContain("14:00"); // resumes at 14:00
+      expect(slots[slots.length - 1]).toBe("18:40"); // ends at 19:00 (6:40pm slot)
     });
   });
 

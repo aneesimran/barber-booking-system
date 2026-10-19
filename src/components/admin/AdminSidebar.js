@@ -13,6 +13,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
     { href: "/admin/blocked", label: "Blocked Slots" },
     { href: "/admin/reports", label: "Reports" },
     { href: "/admin/blast", label: "Blast Messages" },
+    { href: "/admin/backups", label: "Backups & Recovery" },
   ];
 
   const handleSignOut = async () => {

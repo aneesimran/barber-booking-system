@@ -8,7 +8,7 @@ export const metadata = {
   openGraph: {
     title: "Anees Hairdressers | Book Your Appointment",
     description:
-      "Precision cuts. Premium experience. Book online with Imran or Ali.",
+      "Precision cuts. Premium experience. Book online with Imran, Ali, or Mudni.",
     type: "website",
   },
 };

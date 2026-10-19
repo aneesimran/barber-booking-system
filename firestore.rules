@@ -9,7 +9,7 @@ service cloud.firestore {
     // Collection: appointments
     // Document ID: auto-generated
     // Fields:
-    //   - barberId:            string  (required, immutable, must be "imran" or "ali")
+    //   - barberId:            string  (required, immutable, must be "imran", "ali", or "mudni")
     //   - customerId:          string  (required, immutable, Firestore doc ID ref)
     //   - date:                string  (required, immutable, format "YYYY-MM-DD")
     //   - time:                string  (required, immutable, format "HH:MM")
@@ -67,7 +67,7 @@ service cloud.firestore {
       let allAllowedFields = ['barberId', 'customerId', 'date', 'time',
                               'duration', 'status', 'reminderSent',
                               'stripeSetupIntentId', 'managementToken', 'createdAt'];
-      let validBarberIds = ['imran', 'ali'];
+      let validBarberIds = ['imran', 'ali', 'mudni'];
 
       return
         // Schema enforcement: only known fields, all required present
@@ -180,12 +180,15 @@ service cloud.firestore {
 
     // ----- APPOINTMENTS -----
     // Read: allowed (needed for slot availability checking — getBookedSlots)
-    // Create: allowed with strict validation + must not be a blocked slot
-    // Update/Delete: denied (no client-side modifications)
+    // Create: allowed with strict validation + must not be a blocked slot, OR admin (for restores)
+    // Update: allowed for admin or verified customer reschedule/cancel/reminder
+    // Delete: allowed for admin (for disaster recovery and purging test records)
     match /appointments/{appointmentId} {
       allow read: if true;
-      allow create: if isValidAppointmentCreate(request.resource.data) &&
-                    !isSlotBlocked(request.resource.data.barberId, request.resource.data.date, request.resource.data.time);
+      allow create: if isAdmin() || (
+        isValidAppointmentCreate(request.resource.data) &&
+        !isSlotBlocked(request.resource.data.barberId, request.resource.data.date, request.resource.data.time)
+      );
       allow update: if isAdmin() || (
         // Allow marking reminder as sent
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reminderSent', 'updatedAt']) &&
@@ -217,7 +220,7 @@ service cloud.firestore {
         // Ensure rescheduled slot is not blocked
         !isSlotBlocked(resource.data.barberId, request.resource.data.date, request.resource.data.time)
       );
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // ----- CUSTOMERS -----
@@ -258,6 +261,12 @@ service cloud.firestore {
     match /dateSchedules/{overrideId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // ----- SYSTEM BACKUPS -----
+    // Read & Write: strictly authenticated admins only
+    match /_system_backups/{backupId} {
+      allow read, write: if isAdmin();
     }
   }
 }

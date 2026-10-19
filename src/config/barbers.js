@@ -8,6 +8,7 @@ export const barbers = [
   {
     id: "imran",
     name: "Imran (Anees)",
+    phone: "07930383297",
     role: "Owner & Barber",
     bio: "With years of experience and a passion for precision, Imran delivers sharp, clean cuts every time. Specialising in modern fades and classic styles.",
     specialties: ["Skin Fades", "Beard Shaping", "Classic Cuts", "Hair Design"],
@@ -28,6 +29,7 @@ export const barbers = [
   {
     id: "ali",
     name: "Ali",
+    phone: "07538270142",
     role: "Barber",
     bio: "Ali brings fresh energy and a keen eye for trending styles. Known for his attention to detail and friendly approach.",
     specialties: ["Modern Fades", "Scissor Cuts", "Line-Ups", "Beard Trims"],
@@ -44,6 +46,29 @@ export const barbers = [
       sun: null, // closed
     },
     lunchBreak: { start: "14:00", end: "14:20" },
+  },
+  {
+    id: "mudni",
+    name: "Mudni",
+    phone: "07818442523",
+    role: "Trainee Barber",
+    isTrainee: true,
+    discountNote: "50% Off — All haircuts with Mudni are half price solely because he is currently learning barbering",
+    bio: "Mudni is currently learning the barbering trade under expert guidance. The 50% discount on all haircuts with Mudni is provided solely because he is learning barbering.",
+    specialties: ["Classic Cuts", "Modern Fades", "Beard Trims", "Learner Cuts"],
+    image: "/images/mudni-profile.jpg",
+    rating: 5.0,
+    reviewCount: 18,
+    workingHours: {
+      mon: { start: "10:00", end: "19:00" },
+      tue: null, // closed
+      wed: { start: "10:00", end: "19:00" },
+      thu: { start: "10:00", end: "19:00" },
+      fri: { start: "10:00", end: "19:00" },
+      sat: { start: "10:00", end: "19:00" },
+      sun: { start: "10:00", end: "16:00" },
+    },
+    lunchBreak: null,
   },
 ];
 
