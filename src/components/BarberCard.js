@@ -28,7 +28,7 @@ export default function BarberCard({ barber, index }) {
             <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-[var(--gold)] text-[#0a0a0a] text-[11px] font-extrabold tracking-wide uppercase shadow-[0_4px_14px_rgba(201,168,76,0.45)] flex items-center gap-1.5">
               <span>50% OFF</span>
               <span className="opacity-50">•</span>
-              <span>LEARNER</span>
+              <span>1 HR SLOTS</span>
             </div>
           )}
         </div>
@@ -57,9 +57,9 @@ export default function BarberCard({ barber, index }) {
           {barber.isTrainee && (
             <div className="mb-4 p-3 rounded-lg bg-[rgba(201,168,76,0.12)] border border-[var(--gold)]/40 text-xs text-[var(--text-secondary)] leading-relaxed">
               <strong className="text-[var(--gold)] block font-bold mb-1">
-                50% Off — Learning Barbering
+                50% Off — Learning Barbering (1-Hour Slots)
               </strong>
-              All haircuts with {barber.name} are half price solely because he is currently learning barbering.
+              All haircuts with {barber.name} are half price solely because he is currently learning barbering. Appointments are 1 hour long for dedicated, unhurried care.
             </div>
           )}
         </div>

@@ -13,7 +13,7 @@ service cloud.firestore {
     //   - customerId:          string  (required, immutable, Firestore doc ID ref)
     //   - date:                string  (required, immutable, format "YYYY-MM-DD")
     //   - time:                string  (required, immutable, format "HH:MM")
-    //   - duration:            number  (required, immutable, must be exactly 20)
+    //   - duration:            number  (required, immutable, 20 for imran/ali, 60 for mudni)
     //   - status:              string  (required, must be "confirmed" on create)
     //   - reminderSent:        bool    (required, must be false on create)
     //   - stripeSetupIntentId: string|null (optional, immutable)
@@ -93,9 +93,12 @@ service cloud.firestore {
         data.time.size() == 5 &&
         data.time.matches("^\\d{2}:\\d{2}$") &&
 
-        // duration: must be exactly 20 (minutes)
+        // duration: must be 60 for trainee (mudni), 20 for standard barbers
         data.duration is int &&
-        data.duration == 20 &&
+        (
+          (data.barberId == 'mudni' && data.duration == 60) ||
+          (data.barberId in ['imran', 'ali'] && data.duration == 20)
+        ) &&
 
         // status: must be "confirmed" on create
         data.status is string &&

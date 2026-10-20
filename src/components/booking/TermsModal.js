@@ -78,7 +78,7 @@ export default function TermsModal({ isOpen, onClose }) {
             <h4>1. Booking &amp; Appointments</h4>
             <ul>
               <li>
-                All appointments are {shopInfo.appointmentDuration} minutes in duration.
+                All standard appointments are {shopInfo.appointmentDuration} minutes in duration (1 hour for trainee barber appointments).
               </li>
               <li>
                 Appointments can be booked up to {shopInfo.bookingWindowDays} days in advance through our online booking system.

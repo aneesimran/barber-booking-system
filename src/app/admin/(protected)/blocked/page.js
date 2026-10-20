@@ -82,9 +82,28 @@ export default function BlockedSlotsPage() {
             }
           });
 
+          const currentBarber = barbers.find(b => b.id === selectedBarberId);
+          const currentDuration = currentBarber?.slotDuration || 20;
+
           const slotsData = allTimes.map(time => {
-            const isBooked = latestBookedTimes.includes(time);
-            const blockedDoc = blockedByTime.get(time);
+            const [h, m] = time.split(":").map(Number);
+            const slotStart = h * 60 + m;
+            const slotEnd = slotStart + currentDuration;
+
+            const isBooked = latestBookedTimes.some(bt => {
+              if (bt === time) return true;
+              const [bh, bm] = bt.split(":").map(Number);
+              const bStart = bh * 60 + bm;
+              return bStart >= slotStart && bStart < slotEnd;
+            });
+
+            const blockedDoc = Array.from(blockedByTime.values()).find(b => {
+              if (b.time === time) return true;
+              const [bh, bm] = b.time.split(":").map(Number);
+              const bStart = bh * 60 + bm;
+              return bStart >= slotStart && bStart < slotEnd;
+            });
+
             return {
               time,
               isBooked,

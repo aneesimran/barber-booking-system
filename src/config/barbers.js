@@ -25,6 +25,7 @@ export const barbers = [
       sun: null, // closed
     },
     lunchBreak: { start: "13:40", end: "14:00" },
+    slotDuration: 20,
   },
   {
     id: "ali",
@@ -46,6 +47,7 @@ export const barbers = [
       sun: null, // closed
     },
     lunchBreak: { start: "14:00", end: "14:20" },
+    slotDuration: 20,
   },
   {
     id: "mudni",
@@ -53,8 +55,9 @@ export const barbers = [
     phone: "07818442523",
     role: "Trainee Barber",
     isTrainee: true,
-    discountNote: "50% Off — All haircuts with Mudni are half price solely because he is currently learning barbering",
-    bio: "Mudni is currently learning the barbering trade under expert guidance. The 50% discount on all haircuts with Mudni is provided solely because he is learning barbering.",
+    slotDuration: 60, // 1 hour slots for trainee
+    discountNote: "50% Off — All haircuts with Mudni are half price solely because he is currently learning barbering. Appointments are 1 hour long for dedicated care.",
+    bio: "Mudni is currently learning the barbering trade under expert guidance. As a trainee barber, his appointments are 1 hour long to ensure extra care and detail. The 50% discount on all haircuts with Mudni is provided solely because he is learning barbering.",
     specialties: ["Classic Cuts", "Modern Fades", "Beard Trims", "Learner Cuts"],
     image: "/images/mudni-profile.jpg",
     rating: 5.0,
@@ -78,6 +81,17 @@ export const dayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 export const shopInfo = {
   name: "Anees Hairdressers",
   tagline: "Precision Cuts. Premium Experience.",
-  appointmentDuration: 20, // minutes
+  appointmentDuration: 20, // default minutes
   bookingWindowDays: 14, // how far ahead customers can book
 };
+
+/**
+ * Get slot duration in minutes for a specific barber.
+ * Defaults to shopInfo.appointmentDuration (20 mins).
+ * @param {string} barberId
+ * @returns {number}
+ */
+export function getBarberSlotDuration(barberId) {
+  const barber = barbers.find((b) => b.id === barberId);
+  return barber?.slotDuration || shopInfo.appointmentDuration;
+}

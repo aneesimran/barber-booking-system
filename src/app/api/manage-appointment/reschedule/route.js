@@ -161,6 +161,7 @@ export async function POST(request) {
     // Send updated confirmation email
     const barber = barbers.find((b) => b.id === appointment.barberId);
     const barberName = barber ? barber.name : appointment.barberId;
+    const durationText = barber?.slotDuration === 60 || appointment.barberId === "mudni" ? "1 Hour (60 Mins)" : "20 Minutes";
 
     // Fetch customer details for the email
     const { getCustomerByIdRest } = await import("@/lib/appointments");
@@ -265,7 +266,7 @@ export async function POST(request) {
                         </tr>
                         <tr>
                           <td style="padding: 12px 0 0 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Duration</td>
-                          <td style="padding: 12px 0 0 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">20 Minutes</td>
+                          <td style="padding: 12px 0 0 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">${durationText}</td>
                         </tr>
                       </table>
                     </div>

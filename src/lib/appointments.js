@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { randomUUID } from "crypto";
-import { barbers, dayKeys, shopInfo } from "@/config/barbers";
+import { barbers, dayKeys, shopInfo, getBarberSlotDuration } from "@/config/barbers";
 
 /**
  * Returns deterministic document ID for a blocked slot.
@@ -370,7 +370,7 @@ async function createAppointmentRest(data) {
       customerId: { stringValue: data.customerId },
       date: { stringValue: data.date },
       time: { stringValue: data.time },
-      duration: { integerValue: 20 },
+      duration: { integerValue: data.duration || getBarberSlotDuration(data.barberId) },
       status: { stringValue: "confirmed" },
       reminderSent: { booleanValue: false },
       managementToken: { stringValue: managementToken },
@@ -518,7 +518,7 @@ export function generateTimeSlots(schedule, date) {
   const [endH, endM] = hours.end.split(":").map(Number);
   const startMinutes = startH * 60 + startM;
   const endMinutes = endH * 60 + endM;
-  const duration = shopInfo.appointmentDuration;
+  const duration = schedule.slotDuration || schedule.appointmentDuration || (schedule.barberId ? getBarberSlotDuration(schedule.barberId) : shopInfo.appointmentDuration);
 
   let lunchStartMins = -1;
   let lunchEndMins = -1;
@@ -539,15 +539,12 @@ export function generateTimeSlots(schedule, date) {
   for (let m = startMinutes; m + duration <= endMinutes; m += duration) {
     // Skip slots that overlap with Friday shop closure
     if (isFriday) {
-      if (m >= friCloseStart && m < friCloseEnd) continue;
-      if (m + duration > friCloseStart && m + duration <= friCloseEnd) continue;
+      if (m < friCloseEnd && m + duration > friCloseStart) continue;
     }
 
     // Skip slots that overlap with lunch break
     if (lunchStartMins > -1 && lunchEndMins > -1) {
-      if (m >= lunchStartMins && m < lunchEndMins) continue;
-      // Also skip if the slot ends during lunch break
-      if (m + duration > lunchStartMins && m + duration <= lunchEndMins) continue;
+      if (m < lunchEndMins && m + duration > lunchStartMins) continue;
     }
 
     const h = Math.floor(m / 60);
@@ -626,7 +623,8 @@ export async function getBarberSchedule(barberId) {
   return {
     barberId,
     workingHours: barber.workingHours,
-    lunchBreak: barber.lunchBreak
+    lunchBreak: barber.lunchBreak,
+    slotDuration: getBarberSlotDuration(barberId),
   };
 }
 
@@ -666,7 +664,8 @@ export async function getBarberScheduleForDate(barberId, dateString) {
           end: dateOverride.workingHours.end
         } : null
       },
-      lunchBreak: dateOverride.lunchBreak
+      lunchBreak: dateOverride.lunchBreak,
+      slotDuration: getBarberSlotDuration(barberId),
     };
   }
 
@@ -762,15 +761,35 @@ export async function getAvailableSlots(barberId, date) {
     getBlockedSlots(barberId, dateString)
   ]);
 
+  const duration = schedule.slotDuration || schedule.appointmentDuration || (schedule.barberId ? getBarberSlotDuration(schedule.barberId) : shopInfo.appointmentDuration);
+
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
 
   return allSlots.map((time) => {
-    let available = !bookedSlots.includes(time) && !blockedSlots.includes(time);
+    const [h, m] = time.split(":").map(Number);
+    const slotStart = h * 60 + m;
+    const slotEnd = slotStart + duration;
+
+    // Check if slot overlaps with any booked slot or blocked slot
+    const isBooked = bookedSlots.some((bt) => {
+      if (bt === time) return true;
+      const [bh, bm] = bt.split(":").map(Number);
+      const bStart = bh * 60 + bm;
+      return bStart >= slotStart && bStart < slotEnd;
+    });
+
+    const isBlocked = blockedSlots.some((bt) => {
+      if (bt === time) return true;
+      const [bh, bm] = bt.split(":").map(Number);
+      const bStart = bh * 60 + bm;
+      return bStart >= slotStart && bStart < slotEnd;
+    });
+
+    let available = !isBooked && !isBlocked;
 
     // If it's today, disable past time slots
     if (isToday && available) {
-      const [h, m] = time.split(":").map(Number);
       const slotDate = new Date(date);
       slotDate.setHours(h, m, 0, 0);
       const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
@@ -799,13 +818,14 @@ export async function createAppointment(data) {
     throw new Error("This time slot is no longer available. Please select another.");
   }
 
+  const duration = data.duration || getBarberSlotDuration(data.barberId);
   const managementToken = crypto.randomUUID();
   const docRef = await addDoc(collection(db, "appointments"), {
     barberId: data.barberId,
     customerId: data.customerId,
     date: data.date, // "YYYY-MM-DD"
     time: data.time, // "HH:MM"
-    duration: shopInfo.appointmentDuration,
+    duration,
     status: "confirmed",
     reminderSent: false,
     managementToken,

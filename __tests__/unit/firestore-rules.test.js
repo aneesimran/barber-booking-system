@@ -75,8 +75,9 @@ describe("Firestore Security Rules Logic Verification", () => {
     }
 
     // Duration
-    if (data.duration !== 20) {
-      return { valid: false, reason: "Duration must be 20" };
+    const expectedDuration = data.barberId === "mudni" ? 60 : 20;
+    if (data.duration !== expectedDuration) {
+      return { valid: false, reason: `Duration must be ${expectedDuration}` };
     }
 
     // Status
@@ -203,10 +204,10 @@ describe("Firestore Security Rules Logic Verification", () => {
       expect(res.valid).toBe(true);
     });
 
-    it("accepts appointments for imran, ali, and mudni", () => {
-      expect(isValidAppointmentCreate({ ...validData, barberId: "imran" }, serverTime).valid).toBe(true);
-      expect(isValidAppointmentCreate({ ...validData, barberId: "ali" }, serverTime).valid).toBe(true);
-      expect(isValidAppointmentCreate({ ...validData, barberId: "mudni" }, serverTime).valid).toBe(true);
+    it("accepts appointments for imran, ali (20m), and mudni (60m)", () => {
+      expect(isValidAppointmentCreate({ ...validData, barberId: "imran", duration: 20 }, serverTime).valid).toBe(true);
+      expect(isValidAppointmentCreate({ ...validData, barberId: "ali", duration: 20 }, serverTime).valid).toBe(true);
+      expect(isValidAppointmentCreate({ ...validData, barberId: "mudni", duration: 60 }, serverTime).valid).toBe(true);
     });
 
     it("rejects when an unknown barberId is specified", () => {
@@ -215,10 +216,18 @@ describe("Firestore Security Rules Logic Verification", () => {
       expect(res.reason).toContain("Invalid barberId");
     });
 
-    it("rejects when duration is not 20", () => {
+    it("rejects when duration does not match barber requirement", () => {
       const res = isValidAppointmentCreate({ ...validData, duration: 30 }, serverTime);
       expect(res.valid).toBe(false);
       expect(res.reason).toContain("Duration must be 20");
+
+      const resImran60 = isValidAppointmentCreate({ ...validData, barberId: "imran", duration: 60 }, serverTime);
+      expect(resImran60.valid).toBe(false);
+      expect(resImran60.reason).toContain("Duration must be 20");
+
+      const resMudni20 = isValidAppointmentCreate({ ...validData, barberId: "mudni", duration: 20 }, serverTime);
+      expect(resMudni20.valid).toBe(false);
+      expect(resMudni20.reason).toContain("Duration must be 60");
     });
 
     it("rejects initial status other than confirmed", () => {

@@ -80,8 +80,8 @@ export default function BookingWizard({ barber }) {
           <div className="mb-6 p-4 rounded-xl bg-[rgba(201,168,76,0.12)] border border-[var(--gold)]/40 flex items-start gap-3 text-xs leading-relaxed">
             <span className="text-xl leading-none shrink-0 mt-0.5">✂️</span>
             <div>
-              <p className="font-bold text-[var(--gold)] text-sm mb-1">50% Off — Learning Barbering Notice</p>
-              <p className="text-[var(--text-secondary)]">Please note: The 50% discount on haircuts with {barber.name} is offered solely because he is currently learning barbering. Payment is settled in-store at half price.</p>
+              <p className="font-bold text-[var(--gold)] text-sm mb-1">50% Off — Learning Barbering Notice (1-Hour Appointment)</p>
+              <p className="text-[var(--text-secondary)]">Please note: The 50% discount on haircuts with {barber.name} is offered solely because he is currently learning barbering. As a trainee, appointments are 1 hour long to ensure quality and precision. Payment is settled in-store at half price.</p>
             </div>
           </div>
         )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatLocalDate } from "@/lib/appointments";
+import { barbers } from "@/config/barbers";
 
 export default function TimeSlotPicker({
   barberId,
@@ -64,6 +65,8 @@ export default function TimeSlotPicker({
       })
     : "";
 
+  const barber = barbers.find((b) => b.id === barberId);
+
   return (
     <div className="animate-fade-in-up">
       <h2
@@ -72,9 +75,16 @@ export default function TimeSlotPicker({
       >
         Pick a Time
       </h2>
-      <p className="text-sm text-[var(--text-muted)] text-center mb-6">
+      <p className="text-sm text-[var(--text-muted)] text-center mb-2">
         {dateLabel}
       </p>
+      {barber?.slotDuration === 60 ? (
+        <p className="text-xs text-[var(--gold)] text-center mb-6 font-medium">
+          ✂️ Trainee haircut · 1-hour appointment slots
+        </p>
+      ) : (
+        <div className="mb-4" />
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">

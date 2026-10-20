@@ -6,7 +6,7 @@ import {
   getAvailableSlots,
   getBarberScheduleForDate,
 } from "@/lib/appointments";
-import { barbers } from "@/config/barbers";
+import { barbers, getBarberSlotDuration } from "@/config/barbers";
 
 describe("Time Slots & Scheduling Engine", () => {
   const imranBarber = barbers.find((b) => b.id === "imran");
@@ -20,6 +20,21 @@ describe("Time Slots & Scheduling Engine", () => {
 
       const d2 = new Date(2026, 11, 31, 23, 59, 59); // Dec 31, 2026 late night
       expect(formatLocalDate(d2)).toBe("2026-12-31");
+    });
+  });
+
+  describe("getBarberSlotDuration", () => {
+    it("returns 60 minutes for Mudni (trainee)", () => {
+      expect(getBarberSlotDuration("mudni")).toBe(60);
+    });
+
+    it("returns 20 minutes for Imran and Ali", () => {
+      expect(getBarberSlotDuration("imran")).toBe(20);
+      expect(getBarberSlotDuration("ali")).toBe(20);
+    });
+
+    it("defaults to shop appointmentDuration for unknown barber", () => {
+      expect(getBarberSlotDuration("unknown")).toBe(20);
     });
   });
 
@@ -88,7 +103,7 @@ describe("Time Slots & Scheduling Engine", () => {
       expect(wedSlots).toEqual([]);
     });
 
-    it("returns empty array for Imran and Ali on Sunday, but generates slots for Mudni (10:00 to 15:40)", () => {
+    it("returns empty array for Imran and Ali on Sunday, but generates 1-hour slots for Mudni (10:00 to 15:00)", () => {
       // 2026-05-10 is a Sunday
       const sunday = new Date(2026, 4, 10);
       const imranSlots = generateTimeSlots(
@@ -106,12 +121,17 @@ describe("Time Slots & Scheduling Engine", () => {
 
       expect(imranSlots).toEqual([]);
       expect(aliSlots).toEqual([]);
-      expect(mudniSlots.length).toBeGreaterThan(0);
-      expect(mudniSlots[0]).toBe("10:00");
-      expect(mudniSlots[mudniSlots.length - 1]).toBe("15:40"); // 10am to 4pm
+      expect(mudniSlots).toEqual([
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00",
+        "15:00",
+      ]); // 10am to 4pm with 1-hour slots
     });
 
-    it("generates 20-minute slots from 10:00 to 18:40 on a regular Monday for Mudni with no lunch break interruption", () => {
+    it("generates 1-hour slots from 10:00 to 18:00 on a regular Monday for Mudni", () => {
       // 2026-05-04 is a Monday
       const monday = new Date(2026, 4, 4);
       const schedule = {
@@ -121,15 +141,17 @@ describe("Time Slots & Scheduling Engine", () => {
       };
 
       const slots = generateTimeSlots(schedule, monday);
-      expect(slots[0]).toBe("10:00");
-      expect(slots[1]).toBe("10:20");
-      expect(slots[slots.length - 1]).toBe("18:40"); // 10 to 6:40pm
-      // All intervals present without lunch break hole
-      expect(slots).toContain("13:00");
-      expect(slots).toContain("13:20");
-      expect(slots).toContain("13:40");
-      expect(slots).toContain("14:00");
-      expect(slots).toContain("14:20");
+      expect(slots).toEqual([
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00",
+        "15:00",
+        "16:00",
+        "17:00",
+        "18:00",
+      ]);
     });
 
     it("returns empty array for Mudni on Tuesday (closed day)", () => {
@@ -191,7 +213,7 @@ describe("Time Slots & Scheduling Engine", () => {
       expect(slots).toContain("14:20");
     });
 
-    it("excludes slots between 12:20 and 14:00 on Fridays for Mudni", () => {
+    it("excludes slots that overlap 12:20 to 14:00 closure on Fridays for Mudni", () => {
       // 2026-05-08 is a Friday
       const friday = new Date(2026, 4, 8);
       const schedule = {
@@ -202,14 +224,20 @@ describe("Time Slots & Scheduling Engine", () => {
 
       const slots = generateTimeSlots(schedule, friday);
 
-      expect(slots).toContain("12:00"); // ends at 12:20, valid
-      expect(slots).not.toContain("12:20");
-      expect(slots).not.toContain("12:40");
+      // 10:00-11:00 and 11:00-12:00 are before 12:20 closure
+      expect(slots).toContain("10:00");
+      expect(slots).toContain("11:00");
+      // 12:00-13:00 overlaps 12:20 closure
+      expect(slots).not.toContain("12:00");
       expect(slots).not.toContain("13:00");
-      expect(slots).not.toContain("13:20");
-      expect(slots).not.toContain("13:40");
-      expect(slots).toContain("14:00"); // resumes at 14:00
-      expect(slots[slots.length - 1]).toBe("18:40"); // ends at 19:00 (6:40pm slot)
+      // Resumes at 14:00 after closure
+      expect(slots).toContain("14:00");
+      expect(slots).toContain("15:00");
+      expect(slots).toContain("16:00");
+      expect(slots).toContain("17:00");
+      expect(slots).toContain("18:00");
+      expect(slots[slots.length - 1]).toBe("18:00"); // ends at 19:00
+      expect(slots).toEqual(["10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00"]);
     });
   });
 

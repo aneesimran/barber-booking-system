@@ -34,9 +34,11 @@ export async function POST(request) {
                     </tr>
     ` : "";
 
+    const durationText = barber?.slotDuration === 60 || barberId === "mudni" ? "1 Hour (60 Mins)" : "20 Minutes";
+
     const traineeNoteHtml = barber?.isTrainee ? `
       <div style="background-color: rgba(201, 168, 76, 0.08); border: 1px solid rgba(201, 168, 76, 0.35); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #c9a84c; line-height: 1.5;">
-        <strong>✂️ 50% Discount Notice:</strong> All haircuts with ${barberName} are 50% off solely because he is currently learning barbering. Payment is settled in-store at half price.
+        <strong>✂️ 50% Discount Notice:</strong> All haircuts with ${barberName} are 50% off solely because he is currently learning barbering. As a trainee, appointments are 1 hour long. Payment is settled in-store at half price.
       </div>
     ` : "";
 
@@ -204,7 +206,7 @@ export async function POST(request) {
                     </tr>
                     <tr>
                       <td style="padding: 12px 0 0 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Duration</td>
-                      <td style="padding: 12px 0 0 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">20 Minutes</td>
+                      <td style="padding: 12px 0 0 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">${durationText}</td>
                     </tr>
                     ${rateRowHtml}
                   </table>

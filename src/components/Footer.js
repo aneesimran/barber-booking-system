@@ -26,7 +26,7 @@ export default function Footer() {
 
           {/* Info */}
           <p className="text-xs text-[var(--text-muted)] max-w-md leading-relaxed">
-            Walk-ins welcome · Online booking available · {shopInfo.appointmentDuration}-minute appointments
+            Walk-ins welcome · Online booking available · 20-min standard appointments (1 hr for trainee)
           </p>
 
           {/* Copyright */}

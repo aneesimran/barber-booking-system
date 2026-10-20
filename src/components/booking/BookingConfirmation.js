@@ -57,7 +57,9 @@ export default function BookingConfirmation({ barber, date, time }) {
           <div className="h-px bg-[var(--glass-border)]" />
           <div className="flex justify-between items-center">
             <span className="text-xs uppercase tracking-widest text-[var(--text-muted)]">Duration</span>
-            <span className="text-sm font-semibold text-white">{shopInfo.appointmentDuration} mins</span>
+            <span className="text-sm font-semibold text-white">
+              {barber.slotDuration === 60 ? "1 hour (60 mins)" : `${shopInfo.appointmentDuration} mins`}
+            </span>
           </div>
           {barber.isTrainee && (
             <>
