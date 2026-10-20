@@ -59,7 +59,7 @@ export default function BarberCard({ barber, index }) {
               <strong className="text-[var(--gold)] block font-bold mb-1">
                 50% Off — Learning Barbering (1-Hour Slots)
               </strong>
-              All haircuts with {barber.name} are half price solely because he is currently learning barbering. Appointments are 1 hour long for dedicated, unhurried care.
+              All haircuts with {barber.name} are half price solely because he is currently learning barbering. Appointments are up to 1 hour long.
             </div>
           )}
         </div>
