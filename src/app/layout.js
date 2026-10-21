@@ -26,19 +26,40 @@ export default function RootLayout({ children }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Self-healing: Immediately purge stale legacy service worker cache
+              // Immediate self-healing: Purge all caches domain-wide
               if ('caches' in window) {
-                caches.delete('anees-hairdressers-v1').catch(function() {});
+                caches.keys().then(function(names) {
+                  for (var i = 0; i < names.length; i++) {
+                    caches.delete(names[i]);
+                  }
+                }).catch(function() {});
+              }
+
+              // Unregister all legacy service workers domain-wide
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                  for (var i = 0; i < registrations.length; i++) {
+                    registrations[i].unregister();
+                  }
+                }).catch(function() {});
+
+                // If page was controlled by a legacy worker, reload once when it unregisters/changes
+                var hadController = !!navigator.serviceWorker.controller;
+                navigator.serviceWorker.addEventListener('controllerchange', function() {
+                  if (hadController) {
+                    hadController = false;
+                    window.location.reload();
+                  }
+                });
               }
 
               if (window.location.pathname.startsWith('/admin')) {
-                // Add the manifest dynamically for Admin PWA
+                // Add manifest and Apple PWA tags for Admin standalone installation
                 var link = document.createElement('link');
                 link.rel = 'manifest';
                 link.href = '/manifest.json';
                 document.head.appendChild(link);
 
-                // Add Apple PWA meta tags
                 var appleIcon = document.createElement('link');
                 appleIcon.rel = 'apple-touch-icon';
                 appleIcon.href = '/apple-icon.png';
@@ -58,29 +79,6 @@ export default function RootLayout({ children }) {
                 themeColor.name = 'theme-color';
                 themeColor.content = '#0a0a0a';
                 document.head.appendChild(themeColor);
-
-                // Register service worker for Admin
-                if ('serviceWorker' in navigator) {
-                  window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js').then(
-                      function(registration) {
-                        registration.update();
-                      },
-                      function(err) {
-                        console.error('Admin ServiceWorker registration failed: ', err);
-                      }
-                    );
-                  });
-                }
-              } else {
-                // For customer-facing pages, unregister any legacy root-scoped service worker
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    for (var i = 0; i < registrations.length; i++) {
-                      registrations[i].unregister();
-                    }
-                  }).catch(function() {});
-                }
               }
             `
           }}
