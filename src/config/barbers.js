@@ -54,6 +54,7 @@ export const barbers = [
     name: "Mudni",
     phone: "07818442523",
     role: "Trainee Barber",
+    notificationEmail: "mudniimran@gmail.com",
     isTrainee: true,
     slotDuration: 60, // 1 hour slots for trainee
     discountNote: "50% Off — All haircuts with Mudni are half price solely because he is currently learning barbering. Appointments are 1 hour long for dedicated care.",

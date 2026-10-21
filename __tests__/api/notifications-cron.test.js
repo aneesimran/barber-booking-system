@@ -88,6 +88,73 @@ describe("Notifications, Admin Messaging & Cron Jobs", () => {
         })
       );
     });
+
+    it("sends notification email to mudniimran@gmail.com when barberId is mudni", async () => {
+      const calls = [];
+      global.fetch = vi.fn().mockImplementation((url, opts) => {
+        calls.push({ url, opts });
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ id: "msg_resend_mudni" }),
+        });
+      });
+
+      const mudniBooking = {
+        ...validBody,
+        barberId: "mudni",
+        name: "Adam",
+        phone: "07812345678",
+      };
+
+      const res = await confirmationPost(createConfirmRequest(mudniBooking));
+      expect(res.status).toBe(200);
+
+      // Verify two emails were sent via Resend: one to customer, one to Mudni
+      expect(calls.length).toBe(2);
+
+      const mudniCall = calls.find((c) => {
+        const body = JSON.parse(c.opts.body);
+        return body.to.includes("mudniimran@gmail.com");
+      });
+      expect(mudniCall).toBeDefined();
+
+      const mudniPayload = JSON.parse(mudniCall.opts.body);
+      expect(mudniPayload.subject).toContain("New Booking: Adam");
+      expect(mudniPayload.html).toContain("Hi Mudni");
+      expect(mudniPayload.html).toContain("1 Hour (60 Mins)");
+      expect(mudniPayload.html).toContain("07812345678");
+
+      const customerCall = calls.find((c) => {
+        const body = JSON.parse(c.opts.body);
+        return body.to.includes("customer@example.com");
+      });
+      expect(customerCall).toBeDefined();
+    });
+
+    it("does not send notification email to mudniimran@gmail.com when barberId is imran or ali", async () => {
+      const calls = [];
+      global.fetch = vi.fn().mockImplementation((url, opts) => {
+        calls.push({ url, opts });
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ id: "msg_resend_imran" }),
+        });
+      });
+
+      const imranBooking = {
+        ...validBody,
+        barberId: "imran",
+      };
+
+      const res = await confirmationPost(createConfirmRequest(imranBooking));
+      expect(res.status).toBe(200);
+
+      // Only 1 email to the customer
+      expect(calls.length).toBe(1);
+      const payload = JSON.parse(calls[0].opts.body);
+      expect(payload.to).toEqual(["customer@example.com"]);
+      expect(payload.to).not.toContain("mudniimran@gmail.com");
+    });
   });
 
   // ==========================================================================

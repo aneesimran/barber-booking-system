@@ -290,6 +290,86 @@ export async function POST(request) {
             `,
           }),
         }).catch((err) => console.error("Reschedule email failed:", err));
+
+        // Also notify Mudni if appointment is with Mudni
+        if (barber?.notificationEmail || appointment.barberId === "mudni") {
+          const barberNotificationEmail = barber?.notificationEmail || "mudniimran@gmail.com";
+          const adminUrl = `${appUrl}/admin/dashboard`;
+          fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${resendApiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: `Anees Hairdressers <${senderEmail}>`,
+              to: [barberNotificationEmail],
+              subject: `Booking Rescheduled: ${customerName} to ${timeFormatted} on ${fmtDateObj.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`,
+              html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8">
+                  <style>
+                    body { background-color: #0a0a0a; color: #ededed; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 30px auto; background-color: #111111; border: 1px solid rgba(201, 168, 76, 0.3); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+                    .header { background: linear-gradient(135deg, #1f1b14, #141414); padding: 25px; text-align: center; border-bottom: 1px solid rgba(201, 168, 76, 0.25); }
+                    .header h1 { color: #c9a84c; margin: 0 0 5px 0; font-size: 24px; font-family: Georgia, serif; }
+                    .header p { color: #a68a3a; margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; }
+                    .content { padding: 35px 25px; line-height: 1.6; }
+                    .details-card { background-color: #0a0a0a; border: 1px solid #222222; border-radius: 12px; padding: 20px; margin-bottom: 25px; }
+                    .footer { background-color: #1a1a1a; padding: 20px; text-align: center; font-size: 11px; color: #8a8a8a; border-top: 1px solid #222222; }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <div class="header">
+                      <h1>Booking Rescheduled</h1>
+                      <p>Anees Hairdressers</p>
+                    </div>
+                    <div class="content">
+                      <div style="font-size: 18px; font-weight: 600; margin-bottom: 12px; color: #ffffff;">Hi Mudni,</div>
+                      <div style="color: #b5b5b5; font-size: 14px; margin-bottom: 25px;">An appointment with you has been rescheduled:</div>
+
+                      <div style="font-size: 12px; color: #8a8a8a; margin-bottom: 15px; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                        <span style="text-decoration: line-through;">Previously: ${prevFormattedDate} at ${prevTimeFormatted}</span>
+                      </div>
+
+                      <div class="details-card">
+                        <table style="width: 100%; border-collapse: collapse; border-spacing: 0;">
+                          <tr style="border-bottom: 1px solid #222222;">
+                            <td style="padding: 12px 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Customer Name</td>
+                            <td style="padding: 12px 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">${customerName}</td>
+                          </tr>
+                          <tr style="border-bottom: 1px solid #222222;">
+                            <td style="padding: 12px 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">New Date</td>
+                            <td style="padding: 12px 0; text-align: right; font-size: 14px; font-weight: 600; color: #c9a84c;">${formattedDate}</td>
+                          </tr>
+                          <tr style="border-bottom: 1px solid #222222;">
+                            <td style="padding: 12px 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">New Time</td>
+                            <td style="padding: 12px 0; text-align: right; font-size: 14px; font-weight: 600; color: #c9a84c;">${timeFormatted}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 12px 0 0 0; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8a8a;">Duration</td>
+                            <td style="padding: 12px 0 0 0; text-align: right; font-size: 14px; font-weight: 600; color: #ffffff;">1 Hour (60 Mins)</td>
+                          </tr>
+                        </table>
+                      </div>
+
+                      <div style="text-align: center; margin-top: 25px; margin-bottom: 10px;">
+                        <a href="${adminUrl}" style="display: inline-block; background: linear-gradient(135deg, #c9a84c, #a68a3a); color: #0a0a0a; font-weight: 600; font-size: 14px; padding: 12px 28px; border-radius: 8px; text-decoration: none;">Open Admin Dashboard</a>
+                      </div>
+                    </div>
+                    <div class="footer">
+                      <p>&copy; 2026 Anees Hairdressers. Internal Notification.</p>
+                    </div>
+                  </div>
+                </body>
+                </html>
+              `,
+            }),
+          }).catch((err) => console.error("Mudni reschedule email failed:", err));
+        }
       }
     }
 

@@ -125,6 +125,7 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
         body: JSON.stringify({
           email: customerDetails.email,
           name: customerDetails.name,
+          phone: customerDetails.phone,
           barberId,
           date,
           time,
@@ -196,6 +197,7 @@ function CardForm({ customerDetails, bookingData, onSuccess, onError }) {
         body: JSON.stringify({
           email: customerDetails.email,
           name: customerDetails.name,
+          phone: customerDetails.phone,
           barberId,
           date,
           time,

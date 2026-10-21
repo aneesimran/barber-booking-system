@@ -26,8 +26,13 @@ export default function RootLayout({ children }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Self-healing: Immediately purge stale legacy service worker cache
+              if ('caches' in window) {
+                caches.delete('anees-hairdressers-v1').catch(function() {});
+              }
+
               if (window.location.pathname.startsWith('/admin')) {
-                // Add the manifest dynamically
+                // Add the manifest dynamically for Admin PWA
                 var link = document.createElement('link');
                 link.rel = 'manifest';
                 link.href = '/manifest.json';
@@ -54,18 +59,27 @@ export default function RootLayout({ children }) {
                 themeColor.content = '#0a0a0a';
                 document.head.appendChild(themeColor);
 
-                // Register service worker
+                // Register service worker for Admin
                 if ('serviceWorker' in navigator) {
                   window.addEventListener('load', function() {
                     navigator.serviceWorker.register('/sw.js').then(
                       function(registration) {
-                        console.log('Admin ServiceWorker registration successful');
+                        registration.update();
                       },
                       function(err) {
                         console.error('Admin ServiceWorker registration failed: ', err);
                       }
                     );
                   });
+                }
+              } else {
+                // For customer-facing pages, unregister any legacy root-scoped service worker
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for (var i = 0; i < registrations.length; i++) {
+                      registrations[i].unregister();
+                    }
+                  }).catch(function() {});
                 }
               }
             `
