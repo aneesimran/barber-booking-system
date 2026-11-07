@@ -147,16 +147,19 @@ export default function TermsModal({ isOpen, onClose }) {
           </div>
 
           <div className="terms-section">
-            <h4>6. Your Data &amp; Privacy</h4>
+            <h4>6. Your Data &amp; Privacy (UK GDPR)</h4>
             <ul>
               <li>
-                We collect your name, email address, and phone number to manage your booking and send appointment confirmations.
+                We collect your name, email address, and UK mobile number to manage your appointment, send booking confirmations/reminders, and protect against no-shows (lawful basis: contractual necessity and legitimate interest under UK GDPR).
               </li>
               <li>
-                Your personal data will not be shared with third parties for marketing purposes.
+                Your payment card is securely vaulted by <strong>Stripe</strong>. Your personal data is never sold or shared with third parties for marketing purposes.
               </li>
               <li>
-                You may request the deletion of your data at any time by contacting us directly.
+                Under UK GDPR, you have the <strong>Right of Access &amp; Data Portability</strong> (to request a copy of all personal data we hold about you) and the <strong>Right to Erasure (&ldquo;Right to be Forgotten&rdquo;)</strong> (to request the permanent deletion of your customer record and vaulted card details from our database and Stripe).
+              </li>
+              <li>
+                To exercise your data rights or request data export/deletion at any time, please contact us directly by phone or in person at the shop.
               </li>
             </ul>
           </div>

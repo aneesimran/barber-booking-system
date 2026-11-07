@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { shopInfo } from "@/config/barbers";
+import TermsModal from "@/components/booking/TermsModal";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [showTerms, setShowTerms] = useState(false);
 
   return (
     <footer className="relative border-t border-[var(--glass-border)] mt-auto">
@@ -29,12 +32,26 @@ export default function Footer() {
             Walk-ins welcome · Online booking available · 20-min standard appointments (1 hr for trainee)
           </p>
 
+          {/* Terms & Privacy (GDPR) Link */}
+          <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
+            <button
+              type="button"
+              onClick={() => setShowTerms(true)}
+              id="footer-terms-privacy-btn"
+              className="hover:text-[var(--gold)] underline underline-offset-4 transition-colors"
+            >
+              Terms &amp; Privacy (UK GDPR)
+            </button>
+          </div>
+
           {/* Copyright */}
           <p className="text-xs text-[var(--text-muted)] opacity-60">
             © {currentYear} {shopInfo.name}. All rights reserved.
           </p>
         </div>
       </div>
+
+      <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
     </footer>
   );
 }

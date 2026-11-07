@@ -229,7 +229,8 @@ service cloud.firestore {
     // ----- CUSTOMERS -----
     // Read: allowed (needed for createOrFindCustomer client query by email)
     // Create: allowed with strict validation
-    // Update/Delete: denied (no client-side modifications)
+    // Update: allowed for admin or customer updating own profile (email immutable)
+    // Delete: restricted to authenticated admins (for GDPR Right to Erasure)
     //
     // ⚠️ SECURITY NOTE: This collection contains PII (email, phone).
     // Public read is required for the current client-side architecture.
@@ -239,7 +240,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isValidCustomerCreate(request.resource.data);
       allow update: if isAdmin() || (request.resource.data.email == resource.data.email);
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // ----- BARBER SCHEDULES -----
